@@ -36,17 +36,17 @@ governance kernel between your agents and any API.
 
 ## What you get
 
-| Concern                      | How TCPcore handles it                                                                                                |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Tool discovery**           | Compiles your declared capabilities into a minimal MCP tool list — only what you declared                             |
-| **Agent identity**           | Every agent is a first-class actor with a role, a scoped credential and a name in the audit log                       |
-| **Permissions**              | Risk tiers: `low` runs immediately, `medium` goes to a human approval queue, `high` and `agent_forbidden` are blocked |
-| **Audit trail**              | Every call logged with actor, capability, target, payload, outcome and latency (NIST SP 800-53 AU-3)                  |
-| **Approvals**                | Medium-risk actions are _proposed_, never executed. A human approves the exact payload                                |
-| **Credential brokering**     | The agent never holds a vendor key. Tokens are AES-256-GCM encrypted at rest and injected at call time                |
+| Concern                      | How TCPcore handles it                                                                                                                  |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| **Tool discovery**           | Compiles your declared capabilities into a minimal MCP tool list — only what you declared                                               |
+| **Agent identity**           | Every agent is a first-class actor with a role, a scoped credential and a name in the audit log                                         |
+| **Permissions**              | Risk tiers: `low` runs immediately, `medium` goes to a human approval queue, `high` and `agent_forbidden` are blocked                   |
+| **Audit trail**              | Every call logged with actor, capability, target, payload, outcome and latency (NIST SP 800-53 AU-3)                                    |
+| **Approvals**                | Medium-risk actions are _proposed_, never executed. A human approves the exact payload                                                  |
+| **Credential brokering**     | The agent never holds a vendor key. Tokens are AES-256-GCM encrypted at rest and injected at call time                                  |
 | **Prompt-injection defence** | Responses carrying third-party text are scanned, and detected injection is flagged and labelled as untrusted before an agent reads them |
-| **Schema validation**        | Arguments are validated against the declared schema _before_ any outbound call                                        |
-| **Kill switches**            | Global, per-integration and per-agent                                                                                 |
+| **Schema validation**        | Arguments are validated against the declared schema _before_ any outbound call                                                          |
+| **Kill switches**            | Global, per-integration and per-agent                                                                                                   |
 
 The kernel is domain-agnostic: it knows about integrations, capabilities, actors
 and audit records — not tickets or clients.
@@ -95,18 +95,18 @@ claim would be.
 └─────────────────────────────────────────────────────┘
 ```
 
-| In scope | Out of scope |
-|---|---|
-| Calls an agent makes to a **declared** integration | The agent's reasoning, planning or memory |
-| Whether such a call is permitted, queued or refused | Network paths that do not go through the kernel |
-| Validation of arguments before any I/O | The contents of a model's context window |
-| Injection patterns in **responses from declared integrations** | Injection that arrives by any other route |
-| Who called, what they asked for, what was decided | Whether the agent *behaves* well in general |
+| In scope                                                       | Out of scope                                    |
+| -------------------------------------------------------------- | ----------------------------------------------- |
+| Calls an agent makes to a **declared** integration             | The agent's reasoning, planning or memory       |
+| Whether such a call is permitted, queued or refused            | Network paths that do not go through the kernel |
+| Validation of arguments before any I/O                         | The contents of a model's context window        |
+| Injection patterns in **responses from declared integrations** | Injection that arrives by any other route       |
+| Who called, what they asked for, what was decided              | Whether the agent _behaves_ well in general     |
 
 **TCPcore does not prevent prompt injection, and does not claim to.** It detects
 instruction-shaped content in responses from declared integrations, reports what
 it found, and labels that content untrusted. A determined injection can still
-influence an agent. What changes is that the influence is *visible*, and that
+influence an agent. What changes is that the influence is _visible_, and that
 whatever the agent decides next still has to pass the risk gate to reach a
 declared API.
 
