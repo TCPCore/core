@@ -19,6 +19,19 @@ audit trail of every call, every decision, and every denial.
 
 ---
 
+> **Want to see it working first?** The
+> [demo template](https://github.com/TCPCore/tpcore-demo) deploys the kernel over
+> a mock backend in about a minute — no credentials, no database, no
+> configuration:
+>
+> [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/tcpcore-demo?referralCode=Sv4YlP&utm_medium=integration&utm_source=template&utm_campaign=generic)
+>
+> Call a low-risk capability and it executes. Call a medium-risk write and it
+> queues for a human instead of running. Call an `agent_forbidden` delete and it
+> is refused — and it never appeared in the agent's tool list to begin with.
+
+---
+
 ## The problem
 
 Vendor-provided MCP servers are maximalist by design. They expose everything, so
