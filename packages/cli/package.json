@@ -1,0 +1,57 @@
+{
+  "name": "@tcpcore1/cli",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "tcpctl — scaffold, generate, validate and serve TCPcore governed adapters.",
+  "type": "module",
+  "bin": {
+    "tcpctl": "./bin/tcpctl.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TCPCore/core.git",
+    "directory": "packages/cli"
+  },
+  "keywords": [
+    "cli",
+    "mcp",
+    "openapi",
+    "ai-agents",
+    "governance"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node -e \"require('fs').chmodSync('bin/tcpctl.js', 0o755)\"",
+    "dev": "tsx src/index.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@hono/node-server": "^1.13.7",
+    "@tcpcore1/adapters": "workspace:*",
+    "@tcpcore1/kernel": "workspace:*",
+    "@tcpcore1/shared": "workspace:*",
+    "hono": "^4.6.14",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,8 @@
+packages:
+  - 'packages/*'
+
+# pnpm 10+ blocks dependency build scripts by default. These are the ones the
+# project genuinely needs, and pinning the list keeps a compromised transitive
+# dependency from gaining a postinstall hook later.
+onlyBuiltDependencies:
+  - 'esbuild'

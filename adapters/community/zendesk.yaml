@@ -1,0 +1,98 @@
+name: zendesk
+display_name: Zendesk Support
+base_url: https://your-subdomain.zendesk.com/api/v2
+auth:
+  type: bearer
+  header: Authorization
+  prefix: Bearer
+  source: credential_store
+metadata:
+  docs: https://developer.zendesk.com/api-reference/
+  note: Replace "your-subdomain" in base_url with your Zendesk subdomain before use.
+capabilities:
+  - name: list_tickets
+    method: GET
+    path: /tickets.json
+    description: List support tickets.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    content_risk: medium
+    input:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [new, open, pending, hold, solved, closed]
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+
+  - name: get_ticket
+    method: GET
+    path: /tickets/{ticketId}.json
+    description: Retrieve a single ticket with its description.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    content_risk: high
+    input:
+      type: object
+      properties:
+        ticketId:
+          type: string
+      required: [ticketId]
+
+  - name: create_ticket
+    method: POST
+    path: /tickets.json
+    description: Create a ticket on behalf of a customer.
+    risk: medium
+    approval_required: true
+    agent_forbidden: false
+    input:
+      type: object
+      properties:
+        subject:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+      required: [subject, description]
+
+  - name: update_ticket
+    method: PUT
+    path: /tickets/{ticketId}.json
+    description: Update a ticket's status, priority or tags.
+    risk: medium
+    approval_required: true
+    agent_forbidden: false
+    input:
+      type: object
+      properties:
+        ticketId:
+          type: string
+        status:
+          type: string
+          enum: [new, open, pending, hold, solved, closed]
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+      required: [ticketId]
+
+  - name: delete_ticket
+    method: DELETE
+    path: /tickets/{ticketId}.json
+    description: Permanently delete a ticket. Irreversible.
+    risk: high
+    approval_required: false
+    agent_forbidden: true
+    input:
+      type: object
+      properties:
+        ticketId:
+          type: string
+      required: [ticketId]

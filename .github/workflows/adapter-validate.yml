@@ -1,0 +1,60 @@
+name: Validate community adapters
+
+# This workflow is what makes community-contributed adapters scale: any pull
+# request that adds or edits an adapter is machine-checked for format and policy
+# consistency. A maintainer only has to review the risk assignments.
+
+on:
+  pull_request:
+    paths:
+      - 'adapters/community/**'
+      - 'adapters/builtin/**'
+      - 'packages/adapters/**'
+      - 'packages/shared/**'
+      - '.github/workflows/adapter-validate.yml'
+
+jobs:
+  validate:
+    name: Validate adapter files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build the packages the CLI needs
+        run: |
+          pnpm --filter @tcpcore1/shared build
+          pnpm --filter @tcpcore1/adapters build
+          pnpm --filter @tcpcore1/cli build
+
+      - name: Report which adapters changed
+        id: changed
+        run: |
+          BASE="origin/${{ github.base_ref }}"
+          if git rev-parse --verify "$BASE" >/dev/null 2>&1; then
+            CHANGED=$(git diff --name-only --diff-filter=ACMR "$BASE"...HEAD -- 'adapters/**/*.yaml' 'adapters/**/*.yml' | tr '\n' ' ')
+          else
+            CHANGED=$(git diff --name-only --diff-filter=ACMR HEAD~1 HEAD -- 'adapters/**/*.yaml' 'adapters/**/*.yml' | tr '\n' ' ')
+          fi
+          echo "files=$CHANGED" >> "$GITHUB_OUTPUT"
+          if [ -z "$CHANGED" ]; then echo "No adapter files changed."; fi
+
+      - name: Validate changed adapters
+        if: steps.changed.outputs.files != ''
+        run: node packages/cli/bin/tcpctl.js validate ${{ steps.changed.outputs.files }} --strict
+
+      - name: Validate the whole adapter tree
+        run: |
+          node packages/cli/bin/tcpctl.js validate "adapters/builtin/*.yaml" "adapters/community/*.yaml"

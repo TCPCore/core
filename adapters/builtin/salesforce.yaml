@@ -1,0 +1,52 @@
+name: salesforce
+display_name: Salesforce Sales Cloud
+base_url: http://localhost:4001/services/data/v60.0
+auth:
+  type: oauth2
+  token_endpoint: https://login.salesforce.com/services/oauth2/token
+  scopes: [api, refresh_token]
+  source: credential_store
+capabilities:
+  - name: get_opportunity
+    method: GET
+    path: /sobjects/Opportunity/{id}
+    description: Retrieve an opportunity, including its stage, amount and account.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    content_risk: medium
+    input:
+      id:
+        type: string
+        required: true
+        description: Salesforce opportunity record id, e.g. 006A0001
+
+  - name: update_opportunity_stage
+    method: PATCH
+    path: /sobjects/Opportunity/{id}
+    description: Move an opportunity to a new pipeline stage. Changes forecast, so a human authorizes it.
+    risk: medium
+    approval_required: true
+    agent_forbidden: false
+    input:
+      id:
+        type: string
+        required: true
+      stage:
+        type: string
+        required: true
+        enum: [Prospecting, Qualification, Proposal, Negotiation, Closed Won, Closed Lost]
+      notes:
+        type: string
+
+  - name: delete_opportunity
+    method: DELETE
+    path: /sobjects/Opportunity/{id}
+    description: Permanently delete an opportunity from the CRM.
+    risk: high
+    approval_required: false
+    agent_forbidden: true
+    input:
+      id:
+        type: string
+        required: true

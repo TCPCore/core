@@ -1,0 +1,70 @@
+name: Release
+
+# Publishes the three MIT packages to npm on a version tag. The kernel and the
+# adapter format are the viral vector, so they are the ones worth publishing.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Verify before publishing
+        run: |
+          pnpm --filter @tcpcore1/shared build
+          pnpm --filter @tcpcore1/kernel build
+          pnpm --filter @tcpcore1/adapters build
+          pnpm --filter @tcpcore1/cli build
+          pnpm test
+
+      - name: Publish @tcpcore1/shared
+        run: pnpm --filter @tcpcore1/shared publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @tcpcore1/kernel
+        run: pnpm --filter @tcpcore1/kernel publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @tcpcore1/adapters
+        run: pnpm --filter @tcpcore1/adapters publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @tcpcore1/cli
+        run: pnpm --filter @tcpcore1/cli publish --access public --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create the GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          body: |
+            Published to npm:
+            - [`@tcpcore1/kernel`](https://www.npmjs.com/package/@tcpcore1/kernel) — the governance kernel (MIT)
+            - [`@tcpcore1/adapters`](https://www.npmjs.com/package/@tcpcore1/adapters) — adapter format + OpenAPI generator (MIT)
+            - [`@tcpcore1/cli`](https://www.npmjs.com/package/@tcpcore1/cli) — `tcpctl`
+            - [`@tcpcore1/shared`](https://www.npmjs.com/package/@tcpcore1/shared) — schemas and types (MIT)

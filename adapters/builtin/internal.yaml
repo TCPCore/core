@@ -1,0 +1,124 @@
+name: internal
+display_name: TCPcore Ticket Manager (reference adapter)
+base_url: http://localhost:3001/api
+auth:
+  type: jwt
+  source: agent_token
+capabilities:
+  - name: list_tickets
+    method: GET
+    path: /tickets
+    description: List support tickets, optionally filtered by status or priority.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    content_risk: medium
+    input:
+      status:
+        type: string
+        enum: [OPEN, IN_PROGRESS, PENDING_APPROVAL, RESOLVED, CLOSED]
+      priority:
+        type: string
+        enum: [LOW, MEDIUM, HIGH, URGENT]
+      limit:
+        type: integer
+        minimum: 1
+        maximum: 100
+
+  - name: get_ticket
+    method: GET
+    path: /tickets/{ticketId}
+    description: Retrieve a single ticket with its full description.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    content_risk: high
+    input:
+      ticketId:
+        type: string
+        required: true
+
+  - name: set_priority
+    method: PATCH
+    path: /tickets/{ticketId}
+    description: Set the priority of a ticket. Reversible, so it executes immediately.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    input:
+      ticketId:
+        type: string
+        required: true
+      priority:
+        type: string
+        required: true
+        enum: [LOW, MEDIUM, HIGH, URGENT]
+
+  - name: assign_ticket
+    method: PATCH
+    path: /tickets/{ticketId}
+    description: Assign a ticket to a support engineer. Reversible.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    input:
+      ticketId:
+        type: string
+        required: true
+      assigneeId:
+        type: string
+        required: true
+
+  - name: post_comment
+    method: POST
+    path: /tickets/{ticketId}/comments
+    description: Post an internal note on a ticket. Not visible to the customer.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    input:
+      ticketId:
+        type: string
+        required: true
+      body:
+        type: string
+        required: true
+        minLength: 1
+      isInternal:
+        type: boolean
+        default: true
+
+  - name: draft_reply
+    method: POST
+    path: /tickets/{ticketId}/comments
+    description: Propose a customer-facing reply. A human reviews the exact wording before it is sent.
+    risk: medium
+    approval_required: true
+    agent_forbidden: false
+    input:
+      ticketId:
+        type: string
+        required: true
+      body:
+        type: string
+        required: true
+        minLength: 1
+      isInternal:
+        type: boolean
+        default: false
+
+  - name: close_ticket
+    method: PATCH
+    path: /tickets/{ticketId}
+    description: Close a ticket. Stops SLA timers and notifies the customer, so agents may never do it.
+    risk: high
+    approval_required: false
+    agent_forbidden: true
+    input:
+      ticketId:
+        type: string
+        required: true
+      status:
+        type: string
+        required: true
+        enum: [CLOSED]

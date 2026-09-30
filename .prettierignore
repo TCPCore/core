@@ -1,0 +1,40 @@
+# Prettier ignores — generated and vendored output only.
+#
+# Everything here is either produced by a build or a tool, or is not ours to
+# restyle. Source that a human reviews is deliberately NOT ignored: if it drifts
+# from the formatter, CI should say so.
+
+# Build output
+dist/
+build/
+coverage/
+.turbo/
+.next/
+.astro/
+**/.astro/
+apps/docs/dist/
+apps/docs/.astro/
+
+# Dependencies
+node_modules/
+
+# Lockfiles are generated and formatted by the package manager, not by us.
+pnpm-lock.yaml
+package-lock.json
+
+# Prisma-generated client
+**/.prisma/
+
+# The pre-monorepo prototype. Kept for reference, never edited, never restyled.
+legacy/
+
+# Local change snapshots (see .gitignore — never committed)
+.snapshots/
+
+# Editor and OS noise
+.DS_Store
+Thumbs.db
+
+# This repository is its own documentation site; the Astro build emits HTML that
+# Prettier would otherwise try to reformat on every docs build.
+apps/docs/public/

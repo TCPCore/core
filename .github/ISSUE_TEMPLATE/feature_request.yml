@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest a capability or improvement
+title: '[feature] '
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you hitting?
+      description: Describe the situation, not the solution. What are you unable to govern today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like to happen?
+
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Which layer does this belong to?
+      description: |
+        The kernel must stay domain-agnostic. If a proposal names tickets, clients
+        or any other domain concept, it belongs in an adapter or an app, not in the kernel.
+      options:
+        - Kernel (governance-agnostic)
+        - Adapter format / generator
+        - CLI
+        - API
+        - Web console
+        - Docs
+        - Not sure
+    validations:
+      required: true

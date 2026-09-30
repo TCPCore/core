@@ -1,0 +1,63 @@
+name: Bug report
+description: Something isn't working
+title: '[bug] '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: if this is a **security** issue, do not open a public issue.
+        See [SECURITY.md](https://github.com/TCPCore/core/blob/main/SECURITY.md).
+
+  - type: input
+    id: version
+    attributes:
+      label: TCPcore version
+      description: Output of `pnpm tcpctl --version`, or the image tag.
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which component?
+      options:
+        - Kernel (@tcpcore1/kernel)
+        - Adapters / generator (@tcpcore1/adapters)
+        - CLI (tcpctl)
+        - API (apps/api)
+        - Web console (apps/web)
+        - Docker / deployment
+        - Docs
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      description: The exact commands. Include the adapter YAML if one is involved, with secrets removed.
+      render: bash
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node version, how you are running TCPcore (Docker, Railway, local).
+      placeholder: |
+        OS: macOS 15.2
+        Node: 22.11.0
+        Running: docker compose
+    validations:
+      required: true

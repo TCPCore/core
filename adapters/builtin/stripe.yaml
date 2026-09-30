@@ -1,0 +1,54 @@
+name: stripe
+display_name: Stripe Payments & Billing
+base_url: http://localhost:4002/v1
+auth:
+  type: api_key
+  header: Authorization
+  prefix: Bearer
+  source: credential_store
+capabilities:
+  - name: get_charge
+    method: GET
+    path: /charges/{chargeId}
+    description: Retrieve a customer charge, including amount, currency and refund status.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    input:
+      chargeId:
+        type: string
+        required: true
+        description: Stripe charge identifier, e.g. ch_3MtwL24xQ81p
+
+  - name: create_refund
+    method: POST
+    path: /refunds
+    description: Issue a refund against a settled charge. Moves money, so a human authorizes it.
+    risk: medium
+    approval_required: true
+    agent_forbidden: false
+    input:
+      chargeId:
+        type: string
+        required: true
+      amount:
+        type: integer
+        required: true
+        minimum: 1
+        description: Amount in the smallest currency unit (cents), e.g. 21000 for $210.00
+      reason:
+        type: string
+        required: true
+        enum: [duplicate, fraudulent, requested_by_customer]
+
+  - name: delete_customer
+    method: DELETE
+    path: /customers/{customerId}
+    description: Permanently erase a customer account and its billing history.
+    risk: high
+    approval_required: false
+    agent_forbidden: true
+    input:
+      customerId:
+        type: string
+        required: true

@@ -1,0 +1,71 @@
+name: pagerduty
+display_name: PagerDuty
+base_url: https://api.pagerduty.com
+auth:
+  type: api_key
+  header: Authorization
+  prefix: Token token=
+  source: credential_store
+metadata:
+  docs: https://developer.pagerduty.com/api-reference/
+capabilities:
+  - name: list_incidents
+    method: GET
+    path: /incidents
+    description: List incidents, optionally filtered by status.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    content_risk: medium
+    input:
+      statuses:
+        type: string
+        description: Comma-separated statuses, e.g. triggered,acknowledged
+      limit:
+        type: integer
+        minimum: 1
+        maximum: 100
+
+  - name: trigger_incident
+    method: POST
+    path: /incidents
+    description: Page an on-call responder. Wakes people up, so a human authorizes it.
+    risk: medium
+    approval_required: true
+    agent_forbidden: false
+    input:
+      title:
+        type: string
+        required: true
+      service_id:
+        type: string
+        required: true
+      urgency:
+        type: string
+        enum: [high, low]
+      body:
+        type: string
+
+  - name: acknowledge_incident
+    method: PUT
+    path: /incidents/{incidentId}/acknowledge
+    description: Acknowledge an incident, stopping escalation.
+    risk: medium
+    approval_required: true
+    agent_forbidden: false
+    input:
+      incidentId:
+        type: string
+        required: true
+
+  - name: delete_escalation_policy
+    method: DELETE
+    path: /escalation_policies/{policyId}
+    description: Delete an escalation policy, silently disabling paging for a service.
+    risk: high
+    approval_required: false
+    agent_forbidden: true
+    input:
+      policyId:
+        type: string
+        required: true

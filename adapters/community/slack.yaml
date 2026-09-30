@@ -1,0 +1,82 @@
+name: slack
+display_name: Slack
+base_url: https://slack.com/api
+auth:
+  type: bearer
+  header: Authorization
+  prefix: Bearer
+  source: credential_store
+metadata:
+  docs: https://api.slack.com/methods
+capabilities:
+  - name: list_channels
+    method: GET
+    path: /conversations.list
+    description: List channels visible to the token.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    input:
+      limit:
+        type: integer
+        minimum: 1
+        maximum: 1000
+      exclude_archived:
+        type: boolean
+        default: true
+
+  - name: read_history
+    method: GET
+    path: /conversations.history
+    description: Read recent messages from a channel. Message text is untrusted user content.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    content_risk: high
+    input:
+      channel:
+        type: string
+        required: true
+      limit:
+        type: integer
+        minimum: 1
+        maximum: 200
+
+  - name: post_message
+    method: POST
+    path: /chat.postMessage
+    description: Post a message to a channel. Reaches real people, so a human authorizes it.
+    risk: medium
+    approval_required: true
+    agent_forbidden: false
+    input:
+      channel:
+        type: string
+        required: true
+      text:
+        type: string
+        required: true
+
+  - name: archive_channel
+    method: POST
+    path: /conversations.archive
+    description: Archive a channel, removing write access for everyone.
+    risk: high
+    approval_required: false
+    agent_forbidden: true
+    input:
+      channel:
+        type: string
+        required: true
+
+  - name: wipe_user
+    method: DELETE
+    path: /admin.users.wipe
+    description: Permanently purge a user's account and message history.
+    risk: high
+    approval_required: false
+    agent_forbidden: true
+    input:
+      user_id:
+        type: string
+        required: true

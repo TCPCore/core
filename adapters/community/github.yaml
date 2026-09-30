@@ -1,0 +1,139 @@
+name: github
+display_name: GitHub
+base_url: https://api.github.com
+auth:
+  type: bearer
+  header: Authorization
+  prefix: Bearer
+  source: credential_store
+metadata:
+  docs: https://docs.github.com/en/rest
+  spec: https://api.github.com/openapi.json
+capabilities:
+  - name: list_issues
+    method: GET
+    path: /repos/{owner}/{repo}/issues
+    description: List issues in a repository.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    content_risk: medium
+    input:
+      owner:
+        type: string
+        required: true
+      repo:
+        type: string
+        required: true
+      state:
+        type: string
+        enum: [open, closed, all]
+      limit:
+        type: integer
+        minimum: 1
+        maximum: 100
+
+  - name: get_issue
+    method: GET
+    path: /repos/{owner}/{repo}/issues/{issue_number}
+    description: Retrieve a single issue.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    content_risk: high
+    input:
+      owner:
+        type: string
+        required: true
+      repo:
+        type: string
+        required: true
+      issue_number:
+        type: integer
+        required: true
+
+  - name: create_issue
+    method: POST
+    path: /repos/{owner}/{repo}/issues
+    description: Open a new issue. Visible to the public on public repositories, so a human authorizes it.
+    risk: medium
+    approval_required: true
+    agent_forbidden: false
+    input:
+      owner:
+        type: string
+        required: true
+      repo:
+        type: string
+        required: true
+      title:
+        type: string
+        required: true
+      body:
+        type: string
+      assignee:
+        type: string
+      labels:
+        type: array
+        items:
+          type: string
+
+  - name: update_issue
+    method: PATCH
+    path: /repos/{owner}/{repo}/issues/{issue_number}
+    description: Update an issue's title, body, state or assignee.
+    risk: medium
+    approval_required: true
+    agent_forbidden: false
+    input:
+      owner:
+        type: string
+        required: true
+      repo:
+        type: string
+        required: true
+      issue_number:
+        type: integer
+        required: true
+      title:
+        type: string
+      body:
+        type: string
+      state:
+        type: string
+        enum: [open, closed]
+      assignee:
+        type: string
+
+  - name: lock_issue
+    method: DELETE
+    path: /repos/{owner}/{repo}/issues/{issue_number}/lock
+    description: Unlock an issue conversation.
+    risk: high
+    approval_required: false
+    agent_forbidden: true
+    input:
+      owner:
+        type: string
+        required: true
+      repo:
+        type: string
+        required: true
+      issue_number:
+        type: integer
+        required: true
+
+  - name: delete_repo
+    method: DELETE
+    path: /repos/{owner}/{repo}
+    description: Permanently delete a repository. Irreversible.
+    risk: high
+    approval_required: false
+    agent_forbidden: true
+    input:
+      owner:
+        type: string
+        required: true
+      repo:
+        type: string
+        required: true

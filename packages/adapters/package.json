@@ -1,0 +1,49 @@
+{
+  "name": "@tcpcore1/adapters",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "TCPcore adapter format — loader, validator and the OpenAPI/Swagger/Postman/HAR to governed-adapter generator.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TCPCore/core.git",
+    "directory": "packages/adapters"
+  },
+  "keywords": [
+    "openapi",
+    "swagger",
+    "postman",
+    "har",
+    "mcp",
+    "ai-agents",
+    "adapter"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@tcpcore1/shared": "workspace:*",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.1",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

@@ -1,0 +1,42 @@
+name: Adapter request
+description: Request support for a SaaS platform
+title: '[adapter] '
+labels: [adapter-request]
+body:
+  - type: input
+    id: saas
+    attributes:
+      label: SaaS platform
+      placeholder: Linear
+    validations:
+      required: true
+
+  - type: input
+    id: spec
+    attributes:
+      label: Link to the OpenAPI / API documentation
+      description: A machine-readable spec makes this a five-minute job. If none exists, link the REST reference.
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: What would agents do with this?
+      description: |
+        List the specific actions you need. This matters more than you might think —
+        TCPcore's whole premise is exposing the few capabilities an agent needs,
+        not mirroring the vendor's entire API.
+      placeholder: |
+        - list issues assigned to me (read-only)
+        - create an issue from a triage decision (needs approval)
+        - close an issue (human only)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Would you like to contribute it?
+      options:
+        - label: I can open a PR with the generated adapter (see CONTRIBUTING.md)

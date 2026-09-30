@@ -1,0 +1,56 @@
+{
+  "name": "tcpcore",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TCPcore — governed agent infrastructure. Turn any API into a governed, agent-callable surface.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TCPCore/core.git"
+  },
+  "homepage": "https://github.com/TCPCore/core#readme",
+  "bugs": {
+    "url": "https://github.com/TCPCore/core/issues"
+  },
+  "keywords": [
+    "ai-agents",
+    "mcp",
+    "model-context-protocol",
+    "governance",
+    "rbac",
+    "audit",
+    "approval-queue",
+    "prompt-injection",
+    "openapi"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@9.12.0",
+  "scripts": {
+    "build": "pnpm -r --filter @tcpcore1/shared --filter @tcpcore1/kernel --filter @tcpcore1/adapters --filter @tcpcore1/cli build",
+    "typecheck": "pnpm build && pnpm -r --filter @tcpcore1/shared --filter @tcpcore1/kernel --filter @tcpcore1/adapters --filter @tcpcore1/cli exec tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "pnpm build && pnpm lint && pnpm format:check && pnpm test",
+    "tcpctl": "node packages/cli/bin/tcpctl.js",
+    "validate:adapters": "pnpm build && node packages/cli/bin/tcpctl.js validate \"adapters/builtin/*.yaml\" \"adapters/community/*.yaml\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.17.0",
+    "@types/node": "^22.14.0",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.2",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.18.0",
+    "vitest": "^2.1.8",
+    "yaml": "^2.6.1"
+  }
+}

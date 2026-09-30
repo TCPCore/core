@@ -1,0 +1,80 @@
+node_modules/
+dist/
+build/
+coverage/
+.turbo/
+.next/
+.astro/
+**/.astro/
+*.tsbuildinfo
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Prisma local sqlite (CLI serve mode)
+*.db
+*.db-journal
+apps/api/prisma/dev.db*
+
+# Legacy flat app (pre-monorepo) — retained for reference only
+/legacy/
+
+# ---------------------------------------------------------------------------
+# Private key material. NEVER commit any of this.
+# ---------------------------------------------------------------------------
+#
+# The licence-signing key is the single most sensitive artefact in the
+# commercial layer: anyone holding it can mint licences. It exists only on the
+# issuance host and in a secret manager.
+#
+# These rules exist because a scratch key was, at one point during development,
+# sitting in `cloud/phase-b-licensing/.keyscratch/private.pem` with nothing
+# stopping it from being committed. `*.pem` is broad on purpose: a build that
+# needs a legitimate public key in PEM form can `!`-negate it explicitly, and
+# that deliberate exception is much cheaper than an accidental disclosure.
+#
+# See cloud/phase-b-licensing/docs/KEY-CEREMONY.md.
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Issuer scratch space. `keygen --out .keyscratch` is the documented local
+# workflow; the directory it writes must never reach a commit.
+.keyscratch/
+.keyscratch*/
+
+# The patch manifest records absolute paths from the machine that ran the patch.
+# Useful locally, meaningless (and mildly leaky) in a repo.
+cloud/phase-b-licensing/patches/.applied-manifest.json
+
+# ---------------------------------------------------------------------------
+# Working safety net.
+# ---------------------------------------------------------------------------
+#
+# `.snapshots/` holds pre-change copies taken before editing a file, so a change
+# can be reverted byte-for-byte when there is no VCS to fall back on. It is a
+# local convenience, not an artefact: never commit it.
+.snapshots/
+
+# Editor and manual-edit leftovers. A stale `.bak` of a live source file is how
+# an edit gets applied to the wrong copy; these are never wanted in a commit.
+*.bak
+*.orig
+*.rej
+*.ts.bak
+

@@ -1,0 +1,58 @@
+name: hubspot
+display_name: HubSpot CRM & Marketing Hub
+base_url: http://localhost:4003/crm/v3
+auth:
+  type: bearer
+  header: Authorization
+  source: credential_store
+capabilities:
+  - name: get_contact
+    method: GET
+    path: /objects/contacts/{contactId}
+    description: Fetch a contact, including lifecycle stage and lead status.
+    risk: low
+    approval_required: false
+    agent_forbidden: false
+    content_risk: medium
+    input:
+      type: object
+      properties:
+        contactId:
+          type: string
+          description: HubSpot contact id
+        properties:
+          type: string
+          description: Comma-separated list of properties to return
+      required: [contactId]
+
+  - name: update_deal_status
+    method: PATCH
+    path: /objects/deals/{dealId}
+    description: Change a deal's pipeline stage or amount. Affects revenue reporting, so a human authorizes it.
+    risk: medium
+    approval_required: true
+    agent_forbidden: false
+    input:
+      type: object
+      properties:
+        dealId:
+          type: string
+        dealstage:
+          type: string
+        amount:
+          type: number
+      required: [dealId, dealstage]
+
+  - name: purge_contact
+    method: DELETE
+    path: /objects/contacts/{contactId}
+    description: Permanently remove a contact and all associated marketing history (GDPR erase).
+    risk: high
+    approval_required: false
+    agent_forbidden: true
+    input:
+      type: object
+      properties:
+        contactId:
+          type: string
+      required: [contactId]
