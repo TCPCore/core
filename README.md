@@ -2,11 +2,11 @@
 
 # TCPcore
 
-**Turn any API into a governed, agent-callable surface.**
+**Put a governance boundary between your agents and every API they can reach.**
 
-Declare your capabilities in YAML. Get agent identity, permissions, a human
-approval queue, and a NIST AU-3 audit trail. Expose exactly the tools an agent
-needs, and nothing else.
+Declared capabilities only. Risk-tiered execution. Human approval for anything
+consequential. Credential brokering, so no agent ever holds a key. And a complete
+audit trail of every call, every decision, and every denial.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![CI](https://github.com/TCPCore/core/actions/workflows/ci.yml/badge.svg)](https://github.com/TCPCore/core/actions/workflows/ci.yml)
@@ -44,12 +44,21 @@ governance kernel between your agents and any API.
 | **Audit trail**              | Every call logged with actor, capability, target, payload, outcome and latency (NIST SP 800-53 AU-3)                  |
 | **Approvals**                | Medium-risk actions are _proposed_, never executed. A human approves the exact payload                                |
 | **Credential brokering**     | The agent never holds a vendor key. Tokens are AES-256-GCM encrypted at rest and injected at call time                |
-| **Prompt-injection defence** | Responses carrying third-party text are scanned and flagged before an agent reads them                                |
+| **Prompt-injection defence** | Responses carrying third-party text are scanned, and detected injection is flagged and labelled as untrusted before an agent reads them |
 | **Schema validation**        | Arguments are validated against the declared schema _before_ any outbound call                                        |
 | **Kill switches**            | Global, per-integration and per-agent                                                                                 |
 
 The kernel is domain-agnostic: it knows about integrations, capabilities, actors
 and audit records — not tickets or clients.
+
+In one sentence: **TCPcore puts a governance boundary between your agents and
+every API they can reach. Declared capabilities only. Risk-tiered execution.
+Human approval for anything consequential. Credential brokering so no agent ever
+holds a key. And a complete audit trail of every call, every decision, and every
+denial.**
+
+Every clause in that sentence is a thing the code does on the only path an agent
+has to an integration, and each one is covered by a test.
 
 ## The one invariant
 
@@ -57,6 +66,60 @@ Every agent-originated call reaches an integration through exactly one function.
 There is no other path. That is what makes the governance claims true rather than
 aspirational — the risk gate, audit trail and credential broker cannot be
 bypassed, because there is nowhere to bypass them from.
+
+## What TCPcore governs, and what it does not
+
+This boundary is the product. Stating it plainly is more useful than a broader
+claim would be.
+
+```
+┌─────────────────────────────────────────────────────┐
+│  The agent's runtime                                │
+│  ─────────────────                                  │
+│  Reasoning, memory, tool selection, and any other   │
+│  network path — NOT governed by TCPcore             │
+│                                                     │
+│   ┌─────────────────────────────────────────────┐   │
+│   │  TCPcore                                    │   │
+│   │  Every call to a declared integration:      │   │
+│   │    · validated against its schema           │   │
+│   │    · risk-gated                             │   │
+│   │    · credential-brokered                    │   │
+│   │    · response-sanitised                     │   │
+│   │    · audit-logged                           │   │
+│   │                                             │   │
+│   │  This is what TCPcore governs.              │   │
+│   └─────────────────────────────────────────────┘   │
+│                                                     │
+│  Everything else is out of scope.                   │
+└─────────────────────────────────────────────────────┘
+```
+
+| In scope | Out of scope |
+|---|---|
+| Calls an agent makes to a **declared** integration | The agent's reasoning, planning or memory |
+| Whether such a call is permitted, queued or refused | Network paths that do not go through the kernel |
+| Validation of arguments before any I/O | The contents of a model's context window |
+| Injection patterns in **responses from declared integrations** | Injection that arrives by any other route |
+| Who called, what they asked for, what was decided | Whether the agent *behaves* well in general |
+
+**TCPcore does not prevent prompt injection, and does not claim to.** It detects
+instruction-shaped content in responses from declared integrations, reports what
+it found, and labels that content untrusted. A determined injection can still
+influence an agent. What changes is that the influence is *visible*, and that
+whatever the agent decides next still has to pass the risk gate to reach a
+declared API.
+
+In one sentence:
+
+> TCPcore governs every call an agent makes to a declared API. It cannot govern
+> the agent's reasoning, and it does not try. What it can do is make sure that
+> whatever the agent decides, the call either stays within declared bounds, goes
+> to a human, or is refused — and that every outcome is recorded.
+
+A kernel that claimed to control an agent's reasoning would be describing a
+sandbox, not a governance layer. This one is deliberately scoped, which is why
+its guarantees are small enough to be true and specific enough to be tested.
 
 ## Install
 
