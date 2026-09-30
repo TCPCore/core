@@ -1,7 +1,10 @@
 name: Release
 
-# Publishes the three MIT packages to npm on a version tag. The kernel and the
-# adapter format are the viral vector, so they are the ones worth publishing.
+# Publishes the four MIT packages to npm on a version tag. Order matters:
+# shared has no workspace dependencies, kernel and adapters depend on shared, and
+# the CLI depends on all three — so they are published in dependency order and a
+# partial failure leaves the registry consistent rather than publishing a package
+# whose dependency is not there yet.
 
 on:
   push:
