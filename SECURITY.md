@@ -107,6 +107,6 @@ If you are self-hosting TCPcore, these are the things that matter most:
 ## Threat model
 
 The full threat model — including prompt injection, confused-deputy risks, and
-the SSRF surface created by adapter-declared base URLs — is documented at
-[docs.tcpcore.dev/security/threat-model](https://docs.tcpcore.dev/security/threat-model)
-and in `apps/docs/src/content/docs/security/threat-model.mdx`.
+the SSRF surface created by adapter-declared base URLs — is in
+[docs/THREAT-MODEL.md](./docs/THREAT-MODEL.md). It states what is defended, which
+control implements each defence, and what is deliberately out of scope.
