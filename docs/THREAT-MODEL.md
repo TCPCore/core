@@ -1,6 +1,5 @@
 # Threat model
 
-
 This page states the threat model plainly. A security page that claims more than
 the code implements is worse than no page at all, so the out-of-scope section is
 as important as the controls.

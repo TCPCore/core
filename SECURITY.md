@@ -10,11 +10,11 @@
 
 **Do not open a public GitHub issue for a security problem.**
 
-Email **security@tcpcore.dev** with:
+Email **29535497+cptlight@users.noreply.github.com** with:
 
 - a description of the issue and its impact,
 - reproduction steps or a proof of concept,
-- the affected component (kernel, adapters, CLI, API, web),
+- the affected component (kernel, adapters, CLI, or adapter format),
 - the version, and how you are running it.
 
 If you would prefer to encrypt, ask for our PGP key in a first plain email.
@@ -107,6 +107,5 @@ If you are self-hosting TCPcore, these are the things that matter most:
 ## Threat model
 
 The full threat model — including prompt injection, confused-deputy risks, and
-the SSRF surface created by adapter-declared base URLs — is in
-[docs/THREAT-MODEL.md](./docs/THREAT-MODEL.md). It states what is defended, which
-control implements each defence, and what is deliberately out of scope.
+the SSRF surface created by adapter-declared base URLs — is documented in
+[`apps/docs/src/content/docs/security/threat-model.mdx`](./apps/docs/src/content/docs/security/threat-model.mdx).

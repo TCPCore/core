@@ -13,7 +13,7 @@ agent needs, and nothing else.
 [![npm: @tcpcore1/kernel](https://img.shields.io/npm/v/@tcpcore1/kernel?label=%40tcpcore1%2Fkernel)](https://www.npmjs.com/package/@tcpcore1/kernel)
 [![npm: @tcpcore1/cli](https://img.shields.io/npm/v/@tcpcore1/cli?label=%40tcpcore1%2Fcli)](https://www.npmjs.com/package/@tcpcore1/cli)
 
-[Quickstart](#quickstart) · [How it works](#how-it-works) · [Adapter format](#the-adapter-format) · [Risk model](#the-risk-model) · [Packages](#packages) · [Contributing](#contributing)
+[Quickstart](#quickstart) · [How it works](#how-it-works) · [Adapter format](#the-adapter-format) · [Risk model](#the-risk-model) · [Docker](#run-it-locally) · [Packages](#packages)
 
 <!--
   Deploy button — replace RAILWAY_TEMPLATE_CODE once the public template exists.
@@ -108,38 +108,34 @@ node packages/cli/bin/tcpctl.js invoke swagger_petstore.get_inventory \
 
 ## Run it locally
 
-Nothing but Node and pnpm. No database, no Docker, no API key, no account:
+The full stack — API, governance kernel, worker, admin console, PostgreSQL and
+Redis — comes up with one command:
 
 ```bash
 git clone https://github.com/TCPCore/core
-cd core
-pnpm install
-pnpm build
+cd tcpcore
+cp .env.example .env
 
-# Serve the demo adapter set over the MCP surface
-node packages/cli/bin/tcpctl.js serve adapters/builtin/internal.yaml --port 8080
+# Generate the three required secrets
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # JWT_ACCESS_SECRET
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # JWT_REFRESH_SECRET
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"   # TCPCORE_CREDENTIAL_KEY
+
+# Paste each value into .env, then:
+docker compose up -d
+open http://localhost:3000
 ```
 
-`tcpctl serve` keeps state in memory, so the audit trail and approval queue are
-cleared when the process stops. That is deliberate — it is what makes the
-five-minute experience possible. For durable state, inject a store: every backend
-is a port, and `apps/api` in a separate repository shows a Prisma-backed one.
+The API runs `prisma migrate deploy` on start, so a fresh clone with an empty
+volume comes up with the schema applied.
 
-### If you want a governed surface over your own API
+For the seeded sandbox — mock Salesforce, Stripe and HubSpot backends, demo
+accounts, no outbound network access:
 
 ```bash
-# 1. Generate an adapter from an OpenAPI spec
-node packages/cli/bin/tcpctl.js generate https://api.example.com/openapi.json -o my-api.yaml
-
-# 2. Review every risk level by hand — this file is the policy the kernel enforces
-
-# 3. Validate, then serve
-node packages/cli/bin/tcpctl.js validate my-api.yaml
-node packages/cli/bin/tcpctl.js serve my-api.yaml --port 8080
+docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
+# then sign in with admin@demo.tcpcore.dev / demo1234
 ```
-
-The MCP endpoint is then at `http://localhost:8080/api/mcp`, and the tool list at
-`http://localhost:8080/api/mcp/tools`.
 
 ## How it works
 
@@ -168,8 +164,7 @@ Every agent-originated call — internal or external — passes through one of t
 entry points, and both call `governedCall`. There is no other path to an
 integration. That invariant is what makes the governance claims true.
 
-Read the full design in the [kernel package README](./packages/kernel/README.md),
-which documents what each module owns and the two entry points.
+Read the full design in the [architecture docs](./docs/ARCHITECTURE.md).
 
 ## The adapter format
 
@@ -271,6 +266,10 @@ agent can read it. No other MCP server makes this distinction today.
 | [`@tcpcore1/adapters`](./packages/adapters) | The adapter format — loader, validator, and the OpenAPI/Swagger/Postman/HAR generator                                | MIT     |
 | [`@tcpcore1/cli`](./packages/cli)           | `tcpctl` — init, generate, validate, serve, invoke                                                                   | MIT     |
 | [`@tcpcore1/shared`](./packages/shared)     | Zod schemas, TypeScript types and constants                                                                          | MIT     |
+| [`apps/api`](./apps/api)                    | Hono HTTP API, domain routes, agent runtime, BullMQ worker                                                           | MIT     |
+| [`apps/web`](./apps/web)                    | React admin console (Studio)                                                                                         | MIT     |
+| [`apps/demo`](./apps/demo)                  | Mock SaaS backends, seeding, sandbox guard                                                                           | MIT     |
+| [`apps/docs`](./apps/docs)                  | Astro Starlight documentation site                                                                                   | MIT     |
 
 Adapters themselves live in [`adapters/builtin`](./adapters/builtin) and
 [`adapters/community`](./adapters/community). See the
@@ -283,30 +282,37 @@ MIT, everywhere. See [LICENSE](./LICENSE); every package ships its own copy.
 The kernel and the adapter format are MIT on purpose: the goal is ubiquity. You
 can drop `@tcpcore1/kernel` into a proprietary platform without a second thought.
 
-A managed cloud offering — SSO, cross-tenant audit aggregation, token-cost
-analytics and a hosted adapter registry — is planned and will be commercial. It
-is **additive by construction**: it cannot disable the risk gate, approval queue,
-audit trail, prompt-injection sanitiser or MCP surface, in any licence state
-including expired. The self-hosted product in this repository is not crippled to
-create that upsell; it is the whole governance layer.
+A managed cloud offering — SSO/SAML, cross-tenant audit aggregation, advanced
+token-cost analytics, and a hosted adapter registry — is planned and will be
+commercial. The self-hosted product in this repository is not crippled to create
+that upsell; it is the whole governance layer.
 
-That commercial layer lives in a separate, private repository. It is not a
-dependency of anything here, and nothing in it is installed by this repository's
-build.
+That commercial layer now exists in outline under [`cloud/`](./cloud/), built as
+six independently deployable phases. It is additive by construction: no phase can
+disable the risk gate, approval queue, audit trail, prompt-injection sanitiser or
+MCP surface, and a test asserts exactly that across every licence state including
+expired. Start with [`cloud/PHASE-ARCHITECTURE.md`](./cloud/PHASE-ARCHITECTURE.md)
+for the design, and [`cloud/VERIFICATION.md`](./cloud/VERIFICATION.md) to check
+the claim yourself.
+
+Nothing in `cloud/` is installed by this repository's build. The kernel below is
+complete without it.
 
 ## Documentation
 
-| Guide                                                  | What it covers                                                                     |
-| ------------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| [Kernel](./packages/kernel/README.md)                  | What each module owns, the one invariant, storage, the MCP surface, security posture |
-| [Adapter format](./packages/adapters/README.md)        | The file format, the loader and validator, and the OpenAPI/Postman/HAR generator    |
-| [CLI](./packages/cli/README.md)                        | Every `tcpctl` command, with examples                                              |
-| [Schemas](./packages/shared/README.md)                 | The Zod schemas and TypeScript types shared by the other packages                  |
-| [Adapter gallery](./adapters/community/README.md)      | Community-contributed adapters and how to add one                                  |
-| [Contributing](./CONTRIBUTING.md)                      | Ten-minute guide to contributing a community adapter                               |
-| [Security](./SECURITY.md)                              | Threat model, disclosure process and response targets                              |
-| [Threat model](./docs/THREAT-MODEL.md)                 | What is defended, which control implements each defence, and what is out of scope   |
-| [Changelog](./CHANGELOG.md)                            | Release history                                                                    |
+| Guide                                                           | What it covers                                                                                |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [Architecture](./docs/ARCHITECTURE.md)                          | Every package, module and design decision, with the reasoning                                 |
+| [Deployment](./docs/DEPLOYMENT.md)                              | Docker locally, Railway one-click, the public demo, production hardening, troubleshooting     |
+| [Licensing](./docs/LICENSING.md)                                | What MIT permits, how it is wired into every package, the commercial line                     |
+| [Verification](./docs/VERIFICATION.md)                          | Seven stages of commands to independently check every claim, and what is _not_ verified       |
+| [Commercial layer](./cloud/README.md)                           | The six phases: sponsorship, licensing, multi-tenancy, billing, aggregation, adapter registry |
+| [Phase architecture](./cloud/PHASE-ARCHITECTURE.md)             | Where the MIT/commercial boundary sits, and why each phase deploys separately                 |
+| [Commercial verification](./cloud/VERIFICATION.md)              | How to independently confirm the governance guarantee holds                                   |
+| [Build contract](./docs/internal/BUILD-CONTRACT.md)             | The frozen interfaces: ports, env vars, routes, package exports                               |
+| [Audit & remediation](./docs/internal/AUDIT-AND-REMEDIATION.md) | What was wrong in the prototype, and how each flaw was fixed                                  |
+| [Completion report](./docs/internal/COMPLETION-REPORT.md)       | What was verified by execution, and what still needs Docker                                   |
+| [Docs site](./apps/docs)                                        | The public documentation (Astro Starlight, 24 pages)                                          |
 
 ## Contributing
 
