@@ -2,7 +2,7 @@
 
 **Zod schemas, TypeScript types and constants shared across TCPcore.**
 
-The single definition of every wire shape — adapters, capabilities, approvals,
+The single definition of every wire shape - adapters, capabilities, approvals,
 audit records, integrations, actors and domain objects. If two packages disagree
 about a shape, the bug is here.
 
@@ -22,7 +22,7 @@ npm install @tcpcore1/shared
 | `schemas/adapter`     | The adapter format: integrations, capabilities, auth, input schemas                                                                                                        |
 | `schemas/integration` | `Integration`, `IntegrationCredential`, and the single `GovernedCallResult` shape                                                                                          |
 | `schemas/approval`    | `ApprovalRequest` and its status machine                                                                                                                                   |
-| `schemas/audit`       | `AuditLog` — the NIST AU-3 record                                                                                                                                          |
+| `schemas/audit`       | `AuditLog` - the NIST AU-3 record                                                                                                                                          |
 | `schemas/domain`      | Tickets, clients, comments                                                                                                                                                 |
 | `schemas/user`        | Actors, roles, login and registration payloads                                                                                                                             |
 
@@ -30,7 +30,7 @@ npm install @tcpcore1/shared
 
 `GovernedCallResult` is deliberately **not** one interface with optional fields.
 It is a union on `status`, so narrowing gives the caller the right payload shape
-without a cast — and an invalid combination (`denied` with no reason, `failed`
+without a cast - and an invalid combination (`denied` with no reason, `failed`
 with no error) is unrepresentable rather than merely discouraged:
 
 ```ts
@@ -69,7 +69,7 @@ import { AdapterConfigSchema } from '@tcpcore1/shared';
 
 const parsed = AdapterConfigSchema.safeParse(yamlObject);
 if (!parsed.success) {
-  // parsed.error.issues — field-level, ready to show a human
+  // parsed.error.issues - field-level, ready to show a human
 }
 ```
 
@@ -77,7 +77,7 @@ if (!parsed.success) {
 
 `ACTOR_ID_HEADER`, `ACTOR_TYPE_HEADER` and `ON_BEHALF_OF_HEADER` are exported from
 here rather than spelled inline at each use site. The kernel sets them only for
-integrations that opt in, and the internal reference adapter reads them — two
+integrations that opt in, and the internal reference adapter reads them - two
 places that must agree on the exact string.
 
 ## License
