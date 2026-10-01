@@ -18,7 +18,7 @@ Vendor MCP servers are maximalist: they expose every endpoint, so an agent gets 
 tool catalogue with hundreds of entries. Tokens burn, latency climbs, and the
 attack surface grows with every tool you did not need.
 
-Meanwhile agent identity is mostly absent. Agents are anonymous callers — no
+Meanwhile agent identity is mostly absent. Agents are anonymous callers - no
 role, no audit trail, no permission model. When something goes wrong you cannot
 answer _which agent did this, on whose authority, and was it allowed?_
 
@@ -29,7 +29,7 @@ another MCP server.
 
 Every agent-originated call reaches an integration through exactly one function:
 `GovernedProxy.call()`. There is no other path. That is what makes the governance
-claims true rather than aspirational — the risk gate, audit trail and credential
+claims true rather than aspirational - the risk gate, audit trail and credential
 broker cannot be bypassed, because there is nowhere to bypass them from.
 
 ## Install and run
@@ -75,8 +75,8 @@ That is the whole governance path. No HTTP server, no database, no API key.
 
 ## The risk model
 
-Declared per capability in the adapter. The gate is a **pure function** — no
-I/O — so the policy is exhaustively testable.
+Declared per capability in the adapter. The gate is a **pure function** - no
+I/O - so the policy is exhaustively testable.
 
 | Declared                                    | Agent behaviour                                  | Use it for                                |
 | ------------------------------------------- | ------------------------------------------------ | ----------------------------------------- |
@@ -89,7 +89,7 @@ Bypass conditions and the decision that produced them come back on the result, s
 a caller maps them to HTTP status codes without a `try`/`catch` around policy.
 
 **Agents with no grants can do nothing.** An absent capabilities list is treated
-exactly like an empty one — fail closed. A capability is only reachable if it was
+exactly like an empty one - fail closed. A capability is only reachable if it was
 granted by exact name, `integration.*` or `*`.
 
 `content_risk` is orthogonal: it marks capabilities whose _responses_ carry
@@ -144,7 +144,7 @@ const { result } = await kernel.executeApproval(approvalId, reviewer);
 ```
 
 Policy outcomes are **values**, not exceptions: `executed`, `pending_approval`,
-`denied`, `failed`. Every terminal branch returns a resolvable `auditId` — the
+`denied`, `failed`. Every terminal branch returns a resolvable `auditId` - the
 only exceptions are an unregistered or ambiguous capability name, where there is
 no target to attribute a row to.
 
@@ -153,7 +153,7 @@ no target to attribute a row to.
 `KernelStore` is the persistence boundary. The kernel never talks to Prisma (or
 any ORM) directly, which is what makes it testable and self-hostable:
 
-- `MemoryStore` ships in the box — no database at all.
+- `MemoryStore` ships in the box - no database at all.
 - A Prisma-backed store is what `apps/api` injects.
 - `tcpctl serve` uses the in-memory store so the CLI runs with no database.
 
@@ -167,7 +167,7 @@ kernel.mcpServerInfo(); // the `initialize` result an MCP client expects
 
 High-risk and `agent_forbidden` capabilities are never listed. Tool descriptions
 carry the risk note, because the description is the only place an agent learns
-about risk — the kernel enforces it regardless.
+about risk - the kernel enforces it regardless.
 
 ## What this package does not do
 
@@ -194,5 +194,5 @@ MIT. See [LICENSE](./LICENSE). Every package in the repository ships its own cop
 
 The kernel is MIT on purpose: the goal is ubiquity, and you can drop it into a
 proprietary platform without a second thought. A commercial cloud layer exists
-separately and is additive — it cannot disable the risk gate, approvals, audit
+separately and is additive - it cannot disable the risk gate, approvals, audit
 trail, sanitiser or MCP surface, and a test asserts that in every licence state.
