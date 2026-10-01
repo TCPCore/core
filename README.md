@@ -21,14 +21,14 @@ audit trail of every call, every decision, and every denial.
 
 > **Want to see it working first?** The
 > [demo template](https://github.com/TCPCore/tpcore-demo) deploys the kernel over
-> a mock backend in about a minute — no credentials, no database, no
+> a mock backend in about a minute - no credentials, no database, no
 > configuration:
 >
 > [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/tcpcore-demo?referralCode=Sv4YlP&utm_medium=integration&utm_source=template&utm_campaign=generic)
 >
 > Call a low-risk capability and it executes. Call a medium-risk write and it
 > queues for a human instead of running. Call an `agent_forbidden` delete and it
-> is refused — and it never appeared in the agent's tool list to begin with.
+> is refused - and it never appeared in the agent's tool list to begin with.
 
 ---
 
@@ -51,7 +51,7 @@ governance kernel between your agents and any API.
 
 | Concern                      | How TCPcore handles it                                                                                                                  |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| **Tool discovery**           | Compiles your declared capabilities into a minimal MCP tool list — only what you declared                                               |
+| **Tool discovery**           | Compiles your declared capabilities into a minimal MCP tool list - only what you declared                                               |
 | **Agent identity**           | Every agent is a first-class actor with a role, a scoped credential and a name in the audit log                                         |
 | **Permissions**              | Risk tiers: `low` runs immediately, `medium` goes to a human approval queue, `high` and `agent_forbidden` are blocked                   |
 | **Audit trail**              | Every call logged with actor, capability, target, payload, outcome and latency (NIST SP 800-53 AU-3)                                    |
@@ -62,7 +62,7 @@ governance kernel between your agents and any API.
 | **Kill switches**            | Global, per-integration and per-agent                                                                                                   |
 
 The kernel is domain-agnostic: it knows about integrations, capabilities, actors
-and audit records — not tickets or clients.
+and audit records - not tickets or clients.
 
 In one sentence: **TCPcore puts a governance boundary between your agents and
 every API they can reach. Declared capabilities only. Risk-tiered execution.
@@ -77,7 +77,7 @@ has to an integration, and each one is covered by a test.
 
 Every agent-originated call reaches an integration through exactly one function.
 There is no other path. That is what makes the governance claims true rather than
-aspirational — the risk gate, audit trail and credential broker cannot be
+aspirational - the risk gate, audit trail and credential broker cannot be
 bypassed, because there is nowhere to bypass them from.
 
 ## What TCPcore governs, and what it does not
@@ -90,7 +90,7 @@ claim would be.
 │  The agent's runtime                                │
 │  ─────────────────                                  │
 │  Reasoning, memory, tool selection, and any other   │
-│  network path — NOT governed by TCPcore             │
+│  network path - NOT governed by TCPcore             │
 │                                                     │
 │   ┌─────────────────────────────────────────────┐   │
 │   │  TCPcore                                    │   │
@@ -128,7 +128,7 @@ In one sentence:
 > TCPcore governs every call an agent makes to a declared API. It cannot govern
 > the agent's reasoning, and it does not try. What it can do is make sure that
 > whatever the agent decides, the call either stays within declared bounds, goes
-> to a human, or is refused — and that every outcome is recorded.
+> to a human, or is refused - and that every outcome is recorded.
 
 A kernel that claimed to control an agent's reasoning would be describing a
 sandbox, not a governance layer. This one is deliberately scoped, which is why
@@ -160,7 +160,7 @@ npx @tcpcore1/cli validate petstore.yaml
 The integration name comes from the spec's `title`, snake_cased, and each
 `operationId` is snake_cased into a capability. A spec titled _Swagger Petstore_
 with `getPetById`, `addPet` and `getInventory` produces integration
-`swagger_petstore` and capabilities `get_pet_by_id`, `add_pet`, `get_inventory` —
+`swagger_petstore` and capabilities `get_pet_by_id`, `add_pet`, `get_inventory` -
 so the full names are `swagger_petstore.get_pet_by_id` and so on. **Run
 `validate` to see the names your own spec produced**; they follow from the spec
 rather than from a convention you have to guess.
@@ -189,7 +189,7 @@ npx @tcpcore1/cli invoke swagger_petstore.add_pet \
 ```bash
 # low risk -> would execute immediately, but this one reaches the real target,
 # so it needs a credential for the integration. Without one it fails at
-# credential resolution — which is itself the guarantee: the agent never holds
+# credential resolution - which is itself the guarantee: the agent never holds
 # the key.
 npx @tcpcore1/cli invoke swagger_petstore.get_inventory \
   --adapter petstore.yaml --args '{}'
@@ -226,7 +226,7 @@ console.log(result.status); // 'executed' | 'pending_approval' | 'denied' | 'fai
 ```
 
 `MemoryStore` keeps state in the process, so the audit trail and approval queue
-are cleared on restart. Storage is an injectable port — swapping in a durable
+are cleared on restart. Storage is an injectable port - swapping in a durable
 backend changes nothing else in the kernel.
 
 ## The adapter format
@@ -292,7 +292,7 @@ npx @tcpcore1/cli generate ./postman.json --from postman -o my-service.yaml
 ```
 
 The generator infers a risk level per operation, writes its reasoning as YAML
-comments, and redacts credential-shaped values. **You still review it** — this
+comments, and redacts credential-shaped values. **You still review it** - this
 file is the policy the kernel enforces.
 
 Regenerating is safe. `--merge` refreshes the mechanical fields from the spec
@@ -313,7 +313,7 @@ npx @tcpcore1/cli generate ./openapi.json --merge my-service.yaml -o my-service.
 | `risk: high`                               | Blocked for agents; a human executes         | Irreversible or high-impact actions       |
 | `agent_forbidden: true`                    | Not exposed to agents at all                 | Deletes, purges, account wipes            |
 
-Humans are never subject to `agent_forbidden` or `risk: high` — those flags
+Humans are never subject to `agent_forbidden` or `risk: high` - those flags
 describe what _agents_ may do. Human access is governed by RBAC.
 
 `content_risk` is orthogonal: it marks capabilities whose _responses_ carry
@@ -328,7 +328,7 @@ before an agent can read it:
 }
 ```
 
-The payload is **flagged rather than deleted** — an operator usually needs to see
+The payload is **flagged rather than deleted** - an operator usually needs to see
 what arrived, and silently stripping text loses evidence.
 
 ## Packages
@@ -336,8 +336,8 @@ what arrived, and silently stripping text loses evidence.
 | Package                                     | What it is                                                                                                       |
 | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | [`@tcpcore1/kernel`](./packages/kernel)     | Registry, risk gate, governed proxy, token broker, audit trail, approval queue, MCP surface, injection sanitiser |
-| [`@tcpcore1/adapters`](./packages/adapters) | The adapter format — loader, validator, and the OpenAPI/Swagger/Postman/HAR generator                            |
-| [`@tcpcore1/cli`](./packages/cli)           | `tcpctl` — init, generate, validate, serve, invoke                                                               |
+| [`@tcpcore1/adapters`](./packages/adapters) | The adapter format - loader, validator, and the OpenAPI/Swagger/Postman/HAR generator                            |
+| [`@tcpcore1/cli`](./packages/cli)           | `tcpctl` - init, generate, validate, serve, invoke                                                               |
 | [`@tcpcore1/shared`](./packages/shared)     | Zod schemas, TypeScript types and constants                                                                      |
 
 Adapters live in [`adapters/builtin`](./adapters/builtin) (internal reference,
@@ -352,7 +352,7 @@ Implemented, not aspirational:
 2. **No credential ever appears in a response body or an audit row.**
 3. **Validation runs before the risk gate**, so a malformed proposal is never
    queued for a human to approve.
-4. **Only an `APPROVED` request can execute** — not `PENDING`. The
+4. **Only an `APPROVED` request can execute** - not `PENDING`. The
    human-in-the-loop guarantee does not depend on every caller behaving.
 5. **An agent with no grants can do nothing.** An absent capabilities list is
    treated exactly like an empty one: fail closed.
