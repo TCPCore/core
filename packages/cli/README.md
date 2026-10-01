@@ -1,6 +1,6 @@
 # @tcpcore1/cli
 
-**`tcpctl`** — turn any API into a governed, agent-callable surface from the
+**`tcpctl`** - turn any API into a governed, agent-callable surface from the
 terminal. No database, no API key, no code.
 
 MIT licensed.
@@ -29,12 +29,12 @@ npx @tcpcore1/cli --help
 ```bash
 # 1. Turn the public Petstore spec into a governed adapter
 tcpctl generate https://petstore.swagger.io/v2/swagger.json -o petstore.yaml
-#    ✓ 20 capabilities — 8 low · 9 medium · 3 high
+#    ✓ 20 capabilities - 8 low · 9 medium · 3 high
 
 # 2. Read the risk levels it inferred. This is the part you review by hand.
 tcpctl validate petstore.yaml
 
-# 3. Watch the governance model decide — no credential, no database, no key
+# 3. Watch the governance model decide - no credential, no database, no key
 tcpctl invoke swagger_petstore.add_pet --adapter petstore.yaml \
   --args '{"name":"Rex","photoUrls":["https://example.com/rex.jpg"]}'
 ```
@@ -45,7 +45,7 @@ Step 3 prints:
 ℹ swagger_petstore.add_pet (POST /pet, medium risk)
 ℹ Acting as AGENT "cli-agent"
 
-⚠ pending_approval — the risk gate enqueued this for a human.
+⚠ pending_approval - the risk gate enqueued this for a human.
 
   approvalId: appr_8534ca4b-...
   riskLevel:  medium
@@ -70,16 +70,16 @@ tcpctl serve petstore.yaml --port 8080
 
 Serves the governed surface over HTTP:
 
-- `GET  /api/mcp/tools` — the minimal tool list an agent sees
-- `POST /api/mcp/tools/call` — invoke a capability
-- `GET  /api/audit-log` — the NIST AU-3 trail
+- `GET  /api/mcp/tools` - the minimal tool list an agent sees
+- `POST /api/mcp/tools/call` - invoke a capability
+- `GET  /api/audit-log` - the NIST AU-3 trail
 
 Point Cursor or Claude Desktop at `http://localhost:8080/api/mcp` and the agent
 sees **only** the capabilities you declared. High-risk and `agent_forbidden`
 operations are not listed at all.
 
 `serve` uses an in-memory store, so it runs with no database. Integrations that
-need a credential are configured through its HTTP API — which is the point: the
+need a credential are configured through its HTTP API - which is the point: the
 agent never holds the vendor key, the kernel injects it at call time.
 
 ## Invoke
@@ -95,7 +95,7 @@ Exit codes are meaningful, so it composes in a script:
 | ---- | --------------------------------------------- |
 | `0`  | The call executed, or was queued for approval |
 | `1`  | Denied, failed, or a validation error         |
-| `2`  | Usage error — bad flags or arguments          |
+| `2`  | Usage error - bad flags or arguments          |
 
 `denied` (policy) is distinguished from `failed` (technical), so a wrapper script
 can tell "you may not" from "the network broke".
@@ -128,7 +128,7 @@ tcpctl validate my-service.yaml
 tcpctl validate adapters/builtin/*.yaml     # CI: checks every adapter
 ```
 
-Reports a warning per capability — missing descriptions, suspicious risk
+Reports a warning per capability - missing descriptions, suspicious risk
 assignments, `content_risk` on a capability that looks like it returns
 third-party text. Exits non-zero on an invalid adapter, so it drops straight into
 CI.
