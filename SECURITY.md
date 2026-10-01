@@ -33,15 +33,15 @@ We will credit you in the release notes unless you ask us not to.
 
 ## In scope
 
-- The governance kernel (`packages/kernel`) — risk-gate bypass, audit
+- The governance kernel (`packages/kernel`) - risk-gate bypass, audit
   tampering, credential exposure, prompt-injection bypass.
-- The adapter format and generator (`packages/adapters`) — a way to make the
+- The adapter format and generator (`packages/adapters`) - a way to make the
   generator emit an adapter that grants more access than it appears to.
-- The CLI (`packages/cli`) — code execution, path traversal, credential leakage
+- The CLI (`packages/cli`) - code execution, path traversal, credential leakage
   into output or shell history.
-- The API (`apps/api`) — authentication bypass, privilege escalation, IDOR, SSRF
+- The API (`apps/api`) - authentication bypass, privilege escalation, IDOR, SSRF
   via an adapter's `base_url`, tenant isolation.
-- Deployment artifacts — a default that exposes a credential or an unnecessary
+- Deployment artifacts - a default that exposes a credential or an unnecessary
   network surface.
 
 ## Out of scope
@@ -85,7 +85,7 @@ If you are self-hosting TCPcore, these are the things that matter most:
 
 - [ ] `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` and `TCPCORE_CREDENTIAL_KEY` are
       randomly generated, at least 32 bytes, distinct, and stored in a secret
-      manager — not in a committed `.env`.
+      manager - not in a committed `.env`.
 - [ ] `TCPCORE_CREDENTIAL_KEY` is backed up separately. Losing it means every
       stored integration credential must be re-entered; leaking it exposes them.
 - [ ] `CORS_ORIGIN` is an explicit origin, not `*`.
@@ -95,7 +95,7 @@ If you are self-hosting TCPcore, these are the things that matter most:
 - [ ] `DEMO_MODE` is off in production. It seeds known credentials and relaxes
       the outbound guard.
 - [ ] The admin console is not reachable by unauthenticated users, and `VIEWER`
-      accounts are read-only by design — verify your reverse proxy agrees.
+      accounts are read-only by design - verify your reverse proxy agrees.
 - [ ] Rate limits are in place in front of `/api/auth/*`. TCPcore ships a login
       limiter, but an edge limiter is better.
 - [ ] Audit rows are shipped to append-only storage. The API treats them as
@@ -106,7 +106,7 @@ If you are self-hosting TCPcore, these are the things that matter most:
 
 ## Threat model
 
-The full threat model — including prompt injection, confused-deputy risks, and
-the SSRF surface created by adapter-declared base URLs — is in
+The full threat model - including prompt injection, confused-deputy risks, and
+the SSRF surface created by adapter-declared base URLs - is in
 [docs/THREAT-MODEL.md](./docs/THREAT-MODEL.md). It states what is defended, which
 control implements each defence, and what is deliberately out of scope.
