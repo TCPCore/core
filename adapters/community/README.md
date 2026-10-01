@@ -16,11 +16,11 @@ specification, validated automatically by CI on every pull request
 Every adapter in here follows the same three-tier convention, and reviewers hold
 contributions to it:
 
-- **`risk: low`** — read-only. Executes immediately when an agent calls it.
-- **`risk: medium`** with **`approval_required: true`** — any write that a human
+- **`risk: low`** - read-only. Executes immediately when an agent calls it.
+- **`risk: medium`** with **`approval_required: true`** - any write that a human
   should see before it happens (posting a message, creating a ticket, issuing a
   refund). The kernel enqueues these and a human approves the exact payload.
-- **`risk: high`** with **`agent_forbidden: true`** — destructive or
+- **`risk: high`** with **`agent_forbidden: true`** - destructive or
   irreversible. Agents are blocked outright; a human executes it.
 
 `content_risk` is set on capabilities whose responses contain free text written
@@ -37,7 +37,7 @@ prompt-injection-scans those responses before an agent sees them.
    ```
 
 2. Review every inferred risk level by hand. The generator is a starting point,
-   not an authority — the risk you assign is the policy that will be enforced.
+   not an authority - the risk you assign is the policy that will be enforced.
 
 3. Validate:
 
