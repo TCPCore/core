@@ -18,7 +18,7 @@ npm install @tcpcore1/adapters
 
 The adapter is the **policy the kernel enforces**. You review it, diff it, and
 put it in version control. Generating one from an OpenAPI spec gets you 90% of
-the way in seconds; the remaining 10% — the risk levels — is a human decision,
+the way in seconds; the remaining 10% - the risk levels - is a human decision,
 and the generator writes its reasoning into the file as comments so the review is
 about judgement rather than markup.
 
@@ -31,7 +31,7 @@ tcpctl generate ./postman.json   --from postman   -o my-service.yaml
 tcpctl generate ./recording.har  --from har       -o my-service.yaml
 ```
 
-Output looks like this — note the inferred risk and the reasoning comment:
+Output looks like this - note the inferred risk and the reasoning comment:
 
 ```yaml
 name: petstore
@@ -53,7 +53,7 @@ capabilities:
         petId: { type: integer, format: int64 }
       required: [petId]
 
-  # POST /pet — MEDIUM RISK
+  # POST /pet - MEDIUM RISK
   # Risk: Mutating method POST. Requires human approval.
   # Rules: HTTP_METHOD_MUTATION
   # A HUMAN MUST APPROVE each invocation before it reaches the target.
@@ -97,7 +97,7 @@ const adapter = await loadAdapter('./my-service.yaml');
 
 `validateAdapter` rejects an adapter that would be unsafe or unusable, including:
 
-- A capability whose `path` is not absolute, or that carries a URL scheme —
+- A capability whose `path` is not absolute, or that carries a URL scheme -
   the kernel concatenates paths, and this is where a redirect gets caught.
 - Missing `description`, since it is the only place an agent learns about risk.
 - A `risk` value outside `low | medium | high`.
@@ -113,7 +113,7 @@ when an agent reports an empty tool list.
 `sanitizeAdapter` / `redactString` strip credential-shaped values before an
 adapter is written, so a spec with an example API key in it does not become a
 committed secret. **This is a safety net, not a licence to paste secrets into a
-spec** — review the output.
+spec** - review the output.
 
 ## The format
 
