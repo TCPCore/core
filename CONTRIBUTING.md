@@ -85,15 +85,23 @@ only the new capability.
 
 ## Writing code
 
+Run `pnpm build` first. The test suite imports the packages, so on a fresh clone
+`pnpm test` fails with `Failed to resolve entry for package "@tcpcore1/shared"`
+until the packages have been built. It takes a few seconds and only needs doing
+once.
+
 ```bash
+pnpm build       # REQUIRED FIRST: builds the packages the tests import
 pnpm lint        # ESLint (flat config)
 pnpm format      # Prettier
 pnpm typecheck   # tsc across every package
 pnpm test        # Vitest
-pnpm build       # builds packages then apps, in dependency order
 ```
 
-All four must pass. Commit messages follow
+`pnpm check` runs build, lint, format and test in one go, which is what CI runs —
+use it when you want to be sure before pushing.
+
+All of them must pass. Commit messages follow
 [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`,
 `docs:`, `chore:`), which is what makes the generated changelog readable.
 
