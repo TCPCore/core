@@ -1,6 +1,6 @@
 # Contributing to TCPcore
 
-Thanks for being here. The highest-impact contribution is a community adapter —
+Thanks for being here. The highest-impact contribution is a community adapter -
 it takes about ten minutes and makes a SaaS agent-ready for everybody. Code,
 docs and bug reports are all welcome too.
 
@@ -43,10 +43,10 @@ This is the workflow the whole project is designed around.
    and it is the part that matters. The generator's inference is a suggestion;
    the value you commit is the policy that will be enforced.
 
-   - `risk: low` — read-only, or a change that is trivially reversible.
-   - `risk: medium` with `approval_required: true` — any write a human should see
+   - `risk: low` - read-only, or a change that is trivially reversible.
+   - `risk: medium` with `approval_required: true` - any write a human should see
      before it happens. Reaching a customer, moving money, sending a message.
-   - `risk: high` with `agent_forbidden: true` — irreversible. Deletes, purges,
+   - `risk: high` with `agent_forbidden: true` - irreversible. Deletes, purges,
      account wipes, revocations.
 
    Also delete the capabilities nobody needs. Exposing an agent surface of five
@@ -54,7 +54,7 @@ This is the workflow the whole project is designed around.
    point of the project.
 
    Set `content_risk` on anything whose response contains text written by a third
-   party — ticket bodies, CRM notes, chat messages, email. That is what tells the
+   party - ticket bodies, CRM notes, chat messages, email. That is what tells the
    kernel to prompt-injection-scan the payload before an agent reads it.
 
 5. **Validate:**
@@ -64,7 +64,7 @@ This is the workflow the whole project is designed around.
    ```
 
    This is the same check CI runs. It catches schema errors and policy
-   contradictions — a destructive operation not marked `agent_forbidden`, a
+   contradictions - a destructive operation not marked `agent_forbidden`, a
    money-moving operation marked `risk: low`, a capability that is both
    `agent_forbidden` and `approval_required`.
 
@@ -72,7 +72,7 @@ This is the workflow the whole project is designed around.
    one-line description, the capability count and a link to the vendor's API docs.
 
 7. **Open a PR.** CI validates the YAML automatically. A maintainer reviews the
-   risk assignments — that review is the only gate, and it is usually fast.
+   risk assignments - that review is the only gate, and it is usually fast.
 
 Secrets: never commit a real API key, and never include production response data
 in an adapter. The generator redacts credential-shaped strings, but it cannot
@@ -98,7 +98,7 @@ pnpm typecheck   # tsc across every package
 pnpm test        # Vitest
 ```
 
-`pnpm check` runs build, lint, format and test in one go, which is what CI runs —
+`pnpm check` runs build, lint, format and test in one go, which is what CI runs -
 use it when you want to be sure before pushing.
 
 All of them must pass. Commit messages follow
@@ -125,7 +125,7 @@ else it improves:
    `console.log` of a credential, and never add a field that echoes one back.
 
 4. **Fail closed.** An unrecognised method, an unparseable schema, a missing
-   credential — every one of those must deny or error, never silently allow. The
+   credential - every one of those must deny or error, never silently allow. The
    risk gate's default for anything unclassified is `medium`, not `low`.
 
 5. **`AdapterSchema` in `packages/shared` is the only definition of a valid
