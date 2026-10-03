@@ -53,10 +53,14 @@ function makeProxy(
   capture: Captured[],
   opts: { forwardActorHeaders?: boolean; fetchImpl?: typeof fetch; requireHttps?: boolean } = {},
 ): GovernedProxy {
-  const auditor: AuditSink = {
-    record: async () => ({ id: 'audit_1' }) as never,
-    query: async () => ({ records: [], total: 0 }),
-  };
+  // `AuditSink` is a single method: `record`. This fake previously also declared a
+  // `query` member, which the interface does not have — harmless at runtime, and a
+  // type error the moment the typecheck runner is enabled. The cast is deliberate:
+  // the proxy only ever calls `record`, and constructing a full `AuditLog` here
+  // would test the audit row shape rather than the proxy's wire behaviour.
+  const auditor = {
+    record: async () => ({ id: 'audit_1' }),
+  } as unknown as AuditSink;
 
   const fetchImpl =
     opts.fetchImpl ??

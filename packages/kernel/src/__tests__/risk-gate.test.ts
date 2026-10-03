@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RiskGate, capabilityGranted } from '../risk-gate.js';
 import type { ApprovalQueue } from '../approvals.js';
-import type { Actor, KernelCapabilityRecord } from '../types.js';
+import type { Actor, AuditSink, KernelCapabilityRecord } from '../types.js';
 
 function capability(overrides: Partial<KernelCapabilityRecord> = {}): KernelCapabilityRecord {
   return {
@@ -28,7 +28,10 @@ function capability(overrides: Partial<KernelCapabilityRecord> = {}): KernelCapa
 /** The gate is constructed with collaborators, but `evaluate` performs no I/O. */
 function gate(): RiskGate {
   return new RiskGate({
-    auditor: { record: async () => ({ id: 'audit_x' }) },
+    // The gate performs no I/O, so a partial fake is enough. The cast is what lets
+    // a test double be deliberately smaller than the interface it stands in for —
+    // and it is explicit, so a reader can see the fake is not a full `AuditLog`.
+    auditor: { record: async () => ({ id: 'audit_x' }) } as unknown as AuditSink,
     approvals: { enqueue: async () => ({ id: 'appr_x' }) } as unknown as ApprovalQueue,
   });
 }
