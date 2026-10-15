@@ -187,13 +187,13 @@ describe('the five governance primitives execute regardless of licence state', (
       targetSystem: 'test',
       integrationId: 'int_test',
       capabilityName: 'do_thing',
-      action: 'capability.invoke',
+      action: 'EXECUTE',
       metadata: { payload: HOSTILE_PAYLOAD },
     });
 
     expect(record.id).toBeTruthy();
     expect(record.actorId).toBe(HOSTILE_AGENT.id);
-    expect(record.action).toBe('capability.invoke');
+    expect(record.action).toBe('EXECUTE');
 
     // The redaction is part of the guarantee: an audit trail that recorded the secret
     // would be a liability rather than a control.
@@ -275,7 +275,7 @@ describe('each primitive runs without a licence, because the kernel has none', (
       targetSystem: target.integrationName,
       integrationId: target.integrationId,
       capabilityName: target.name,
-      action: 'capability.invoke',
+      action: 'EXECUTE',
       metadata: { capabilityRisk: target.riskLevel },
     });
 

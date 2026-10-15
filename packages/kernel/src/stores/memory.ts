@@ -4,8 +4,11 @@ import type {
   KernelAgentRun,
   KernelCapabilityRecord,
   KernelStore,
+  KernelStoreFactory,
   StoredCredential,
+  TenantId,
 } from '../types.js';
+import { SINGLE_TENANT } from '../types.js';
 
 /**
  * In-memory implementation of {@link KernelStore}.
@@ -150,5 +153,63 @@ export class MemoryStore implements KernelStore {
       approvals: this.approvals.size,
       capabilities: this.capabilities.size,
     };
+  }
+}
+
+export interface MemoryStoreFactoryOptions {
+  /**
+   * Whether this factory may hand out a store for {@link SINGLE_TENANT}.
+   *
+   * **Defaults to `false`, and that default is the point.** A multi-tenant
+   * deployment that could silently obtain a single-tenant store has reintroduced
+   * exactly the class of bug that binding the tenant at the store exists to
+   * remove, one layer down, and harder to see: the store would look perfectly
+   * healthy while every tenant shared it.
+   *
+   * A single-tenant self-hosted deployment sets this to `true` and is explicit
+   * about what it is. Everything else leaves it alone and cannot reach the
+   * sentinel by accident.
+   */
+  readonly allowSingleTenant?: boolean;
+}
+
+/**
+ * Hands out one {@link MemoryStore} per tenant.
+ *
+ * Stores are created lazily and retained, so a tenant's data accumulates across
+ * requests the way a persistent store's would. Each store owns its own Maps, so
+ * isolation is structural: there is no query path that could return another
+ * tenant's rows, because there is no shared collection to query.
+ *
+ * This is the in-memory counterpart to the Postgres-backed factory, and it is what
+ * `tcpctl serve` uses when no database is configured.
+ */
+export class MemoryStoreFactory implements KernelStoreFactory {
+  readonly #stores = new Map<TenantId, MemoryStore>();
+  readonly #allowSingleTenant: boolean;
+
+  public constructor(options: MemoryStoreFactoryOptions = {}) {
+    this.#allowSingleTenant = options.allowSingleTenant ?? false;
+  }
+
+  forTenant(tenantId: TenantId): MemoryStore {
+    if (tenantId === SINGLE_TENANT && !this.#allowSingleTenant) {
+      throw new Error(
+        'MemoryStoreFactory: refusing to hand out a SINGLE_TENANT store. ' +
+          'Pass { allowSingleTenant: true } if this deployment genuinely has one tenant.',
+      );
+    }
+
+    const existing = this.#stores.get(tenantId);
+    if (existing) return existing;
+
+    const created = new MemoryStore();
+    this.#stores.set(tenantId, created);
+    return created;
+  }
+
+  /** Test/demo helper: the tenants this factory has handed out stores for. */
+  tenants(): TenantId[] {
+    return [...this.#stores.keys()];
   }
 }

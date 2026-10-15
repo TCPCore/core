@@ -33,11 +33,61 @@ export interface Actor {
 }
 
 /**
+ * A tenant identifier.
+ *
+ * Branded on purpose: a `TenantId` is not interchangeable with `string`, so a raw
+ * string cannot be passed by accident. A caller converts at the boundary, which is
+ * the right place to validate what the value actually is.
+ *
+ * The kernel is tenant-aware, not tenant-specific. A single-tenant self-hosted
+ * deployment passes {@link SINGLE_TENANT} and behaves exactly as it did before
+ * tenancy existed.
+ */
+export type TenantId = string & { readonly __brand: 'TenantId' };
+
+/**
+ * The tenant a single-tenant self-hosted deployment operates as.
+ *
+ * Exported from the public surface rather than kept internal: it is part of the
+ * contract, and a single-tenant user needs it to call the store at all.
+ */
+export const SINGLE_TENANT = '__single__' as TenantId;
+
+/** Convert a validated string into a `TenantId`. The one sanctioned cast. */
+export function asTenantId(value: string): TenantId {
+  if (value.length === 0) {
+    throw new Error('asTenantId requires a non-empty tenant id');
+  }
+  return value as TenantId;
+}
+
+/**
  * Persistence boundary.
  *
- * The kernel never talks to Prisma directly. `apps/api` injects a Prisma-backed
- * store; the CLI injects the in-memory store so `tcpctl serve` runs with no
- * database at all. This is what makes the kernel testable and self-hostable.
+ * The kernel never talks to a database driver directly. A host injects a
+ * Postgres-backed store in production and the in-memory store when there is no
+ * database, which is what makes the kernel testable and self-hostable.
+ *
+ * ## A store is bound to one tenant for its lifetime
+ *
+ * These signatures take no tenant. The tenant is bound **once**, when the store is
+ * obtained from a {@link KernelStoreFactory}, and every call on that store
+ * inherits it.
+ *
+ * That is a deliberate choice over passing a tenant to each method, and the
+ * difference is not cosmetic:
+ *
+ *   - **One decision, not sixteen.** A request that acquires tenant A's store and
+ *     then makes sixteen calls has decided which tenant it is acting for exactly
+ *     once. Threading a parameter through those calls is sixteen decisions, and
+ *     only the first is auditable.
+ *   - **Cross-tenant reads-then-writes become unrepresentable.** A request holding
+ *     one store cannot read tenant A and write tenant B. Threading a parameter
+ *     permits exactly that mistake.
+ *   - **Isolation is structural.** The bound tenant is a private field of the
+ *     store. There is no ambient state to forget to set and no parameter a caller
+ *     can omit, so a query that is missing its tenant predicate cannot be written
+ *     at all.
  */
 export interface KernelStore {
   saveIntegration(integration: Integration): Promise<void>;
@@ -63,6 +113,36 @@ export interface KernelStore {
 
   saveAgentRun(run: KernelAgentRun): Promise<void>;
   listAgentRuns(limit?: number): Promise<KernelAgentRun[]>;
+}
+
+/**
+ * Where a tenant-bound store comes from.
+ *
+ * This is the **one** place a tenant is bound. Every object downstream (the
+ * registry, the auditor, the approval queue, the token broker) receives a
+ * {@link KernelStore} and inherits its tenant without holding one itself. Nothing
+ * in the kernel keeps a tenant as a field, so there is no second copy to disagree
+ * with the first.
+ *
+ * ## `SINGLE_TENANT` is a factory input, never a method default
+ *
+ * `forTenant` requires an argument, so there is no default to fall through to. A
+ * single-tenant deployment constructs its factory knowing that is what it is; a
+ * multi-tenant deployment's factory can refuse `SINGLE_TENANT` outright, which
+ * makes accidental single-tenant operation in a multi-tenant system impossible
+ * rather than merely discouraged.
+ *
+ * ## Why a parameter rather than ambient context
+ *
+ * An earlier shape read the tenant from ambient async context. That fails on the
+ * hot path beneath every governed call three ways: it interleaves under
+ * concurrency, it is invisible coupling (the store cannot be called from a worker
+ * or a CLI without a context provider), and it fails silently, because an unset
+ * tenant makes a `WHERE tenant_id = ...` predicate match nothing, so the caller
+ * sees an empty result rather than an error.
+ */
+export interface KernelStoreFactory {
+  forTenant(tenantId: TenantId): KernelStore;
 }
 
 /**
