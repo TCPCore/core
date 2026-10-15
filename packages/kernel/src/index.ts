@@ -58,5 +58,19 @@ export {
   type ValidationIssue,
   type ValidateOptions,
 } from './schema-validate.js';
-export { MemoryStore } from './stores/memory.js';
+export { MemoryStore, MemoryStoreFactory, type MemoryStoreFactoryOptions } from './stores/memory.js';
+export {
+  PostgresKernelStore,
+  PostgresKernelStoreFactory,
+  createPostgresKernelStore,
+  createPostgresSchema,
+  POSTGRES_KERNEL_SCHEMA_SQL,
+  POSTGRES_KERNEL_RLS_SQL,
+  POSTGRES_KERNEL_TABLES,
+  type PostgresKernelStoreOptions,
+  type PostgresKernelStoreFactoryOptions,
+  type PgClientLike,
+  type PgPoolLike,
+  type PgQueryResultLike,
+} from './stores/postgres.js';
 export { newId, requestId, auditId } from './ids.js';
