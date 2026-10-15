@@ -39,7 +39,9 @@
     "format:check": "prettier --check .",
     "check": "pnpm build && pnpm lint && pnpm format:check && pnpm test",
     "tcpctl": "node packages/cli/bin/tcpctl.js",
-    "validate:adapters": "pnpm build && node packages/cli/bin/tcpctl.js validate \"adapters/builtin/*.yaml\" \"adapters/community/*.yaml\""
+    "validate:adapters": "pnpm build && node packages/cli/bin/tcpctl.js validate \"adapters/builtin/*.yaml\" \"adapters/community/*.yaml\"",
+    "verify:postgres": "pnpm build && node scripts/verify-postgres-store.mjs",
+    "verify:postgres:serve": "pnpm build && node scripts/verify-serve-postgres.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

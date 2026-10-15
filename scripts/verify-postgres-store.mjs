@@ -348,17 +348,59 @@ async function main() {
   check('NUMERIC cost round trips', runs[0]?.costUsd === 0.001234, String(runs[0]?.costUsd));
 
   // -------------------------------------------------------------- isolation
-  step('4. Prove tenant_beta cannot see tenant_alpha rows');
-  equal('beta sees no integrations', await beta.listIntegrations(), []);
-  equal('beta sees no capabilities', await beta.listCapabilities(), []);
-  equal('beta getCredential is undefined', await beta.getCredential('petstore'), undefined);
-  equal('beta audit total is 0', (await beta.listAudit({})).total, 0);
-  equal('beta listApprovals is 0', (await beta.listApprovals()).length, 0);
-  equal('beta getApproval returns undefined', await beta.getApproval('approval_alpha_1'), undefined);
-  equal('beta listAgentRuns is 0', (await beta.listAgentRuns()).length, 0);
+  step('4. The headline claim: write as A, read as B, B must not see A rows');
+  // A has now written an integration, a capability, a credential, an audit row,
+  // an approval and an agent run. B has written nothing. This is the sequence a
+  // missing tenant predicate would expose, so it is asserted explicitly and
+  // counted rather than described.
+  const alphaWrote = {
+    integrations: (await alpha.listIntegrations()).length,
+    capabilities: (await alpha.listCapabilities()).length,
+    audit: (await alpha.listAudit({})).total,
+    approvals: (await alpha.listApprovals()).length,
+    runs: (await alpha.listAgentRuns()).length,
+  };
+  const betaSees = {
+    integrations: (await beta.listIntegrations()).length,
+    capabilities: (await beta.listCapabilities()).length,
+    audit: (await beta.listAudit({})).total,
+    approvals: (await beta.listApprovals()).length,
+    runs: (await beta.listAgentRuns()).length,
+  };
+  console.log(`  tenant_alpha wrote: ${JSON.stringify(alphaWrote)}`);
+  console.log(`  tenant_beta  sees : ${JSON.stringify(betaSees)}`);
 
-  // Beta now writes its own rows under the same names, which is the real test:
-  // isolation has to hold when the natural keys collide.
+  equal('A has an integration to hide', alphaWrote.integrations, 1);
+  equal('B reads 0 integrations where A has 1', betaSees.integrations, 0);
+  equal('B reads 0 capabilities where A has 1', betaSees.capabilities, 0);
+  equal('B reads 0 audit rows where A has 1', betaSees.audit, 0);
+  equal('B reads 0 approvals where A has 1', betaSees.approvals, 0);
+  equal('B reads 0 agent runs where A has 1', betaSees.runs, 0);
+  equal('B cannot fetch A credential by the same integration name', await beta.getCredential('petstore'), undefined);
+  equal('B cannot fetch A approval by id', await beta.getApproval('approval_alpha_1'), undefined);
+  equal(
+    'B cannot reach A rows through the capability filter',
+    (await beta.listCapabilities({ integrationName: 'petstore' })).length,
+    0,
+  );
+  equal(
+    'B cannot reach A rows through the audit search predicate',
+    (await beta.listAudit({ search: 'alpha' })).total,
+    0,
+  );
+
+  // The same rows read back through a raw, unscoped connection. This shows the data
+  // really is in the table and it is the STORE filtering it, not an empty database.
+  const rawCounts = await admin.query(
+    `SELECT tenant_id, COUNT(*)::int AS n FROM kernel_audit_log GROUP BY tenant_id ORDER BY tenant_id`,
+  );
+  console.log(`  raw table contents by tenant (unscoped read): ${JSON.stringify(rawCounts.rows)}`);
+  check(
+    'the rows really exist, so the absence above is the tenant predicate working',
+    rawCounts.rows.some((row) => row.tenant_id === TENANT_A && row.n === 1),
+  );
+
+  // Beta now writes under the same natural keys, which is the harder case.
   await beta.saveIntegration(integrationB);
   await beta.saveCapabilities(integrationB, [capabilityFor(integrationB, 'beta')]);
   await beta.appendAudit(auditFor('audit_beta_1', 'beta'));
@@ -380,7 +422,7 @@ async function main() {
   );
 
   // ------------------------------------------------- arbitrary tenant name
-  step('5. Isolation also holds for a tenant that writes first');
+  step('5b. Isolation also holds for a tenant that writes first');
   const gamma = factory.forTenant(asTenantId('tenant_gamma'));
   await gamma.saveIntegration({ ...integrationA, id: 'int_gamma', name: 'gamma-only', displayName: 'Gamma' });
   equal('gamma sees only itself', (await gamma.listIntegrations()).map((r) => r.name), ['gamma-only']);
