@@ -171,8 +171,9 @@ export const COMMANDS: CommandSpec[] = [
     name: 'serve',
     summary: 'Run the governance kernel locally',
     description:
-      'Loads the given adapters and serves the kernel HTTP surface: the MCP manifest, tool list and the governed invoke endpoint. Uses in-memory storage, so no database is required.',
-    usage: 'tcpctl serve <files...> [--port 8080]',
+      'Loads the given adapters and serves the kernel HTTP surface: the MCP manifest, tool list and the governed invoke endpoint. Uses in-memory storage by default, so no database is required. Pass --store postgres with --database-url to persist governance state in PostgreSQL instead.',
+    usage:
+      'tcpctl serve <files...> [--port 8080] [--store memory|postgres] [--database-url postgres://...]',
     positional: {
       name: 'files',
       description: 'Adapter files to load.',
@@ -181,6 +182,26 @@ export const COMMANDS: CommandSpec[] = [
     },
     flags: [
       { name: '--port', type: 'number', description: 'Port to listen on.', default: '8080' },
+      {
+        name: '--store',
+        type: 'string',
+        description:
+          'Storage backend. "memory" (default) needs no database; "postgres" requires --database-url and persists audit, approvals, integrations and credentials.',
+        default: 'memory',
+      },
+      {
+        name: '--database-url',
+        type: 'string',
+        description:
+          'PostgreSQL connection string, e.g. postgres://user:pw@host:5432/db. Required when --store postgres. Falls back to DATABASE_URL if set.',
+      },
+      {
+        name: '--tenant-id',
+        type: 'string',
+        description:
+          'Tenant the serve process acts as. Every row it reads and writes is scoped to this id.',
+        default: '__single__',
+      },
       {
         name: '--allow-host',
         type: 'string',
@@ -202,6 +223,7 @@ export const COMMANDS: CommandSpec[] = [
     examples: [
       'tcpctl serve adapters/builtin/*.yaml',
       'tcpctl serve ./my-adapter.yaml --port 9090',
+      'tcpctl serve ./my-adapter.yaml --store postgres --database-url postgres://localhost:5432/tcpcore',
     ],
   },
   {

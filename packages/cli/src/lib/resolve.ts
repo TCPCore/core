@@ -64,5 +64,5 @@ export function parseArgs(input: string | undefined): Record<string, unknown> {
 
 /** Runtime version, read from package.json without importing it as JSON. */
 export function cliVersion(): string {
-  return process.env.TCPCTL_VERSION ?? '0.1.0';
+  return process.env.TCPCTL_VERSION ?? '0.2.0';
 }

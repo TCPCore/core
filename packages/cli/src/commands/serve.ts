@@ -1,18 +1,111 @@
 import { Hono } from 'hono';
 import { serve } from '@hono/node-server';
-import { Kernel, MemoryStore, newId } from '@tcpcore1/kernel';
-import type { Actor } from '@tcpcore1/kernel';
+import {
+  Kernel,
+  MemoryStoreFactory,
+  PostgresKernelStoreFactory,
+  asTenantId,
+  newId,
+} from '@tcpcore1/kernel';
+import type { Actor, KernelStore } from '@tcpcore1/kernel';
 import { loadAdapterFile } from '@tcpcore1/adapters';
 import pc from 'picocolors';
 import { flagBoolean, flagNumber, flagString, type ParsedArgv } from '../lib/commands.js';
 import { symbols, write, writeErr } from '../lib/output.js';
 
+/** The one tenant `tcpctl serve` acts as. Bound at the factory, once. */
+const SERVE_TENANT = '__single__';
+
+/**
+ * Choose the storage backend.
+ *
+ * The default stays in-memory, exactly as before: `serve` is the "five minute"
+ * path and must not start requiring a database. `--store postgres` binds a tenant
+ * on a Postgres-backed factory and hands the kernel the store it returns, so the
+ * tenant is decided here, once, rather than being read from ambient state by every
+ * query the kernel makes.
+ */
+async function selectStore(
+  parsed: ParsedArgv,
+): Promise<{ ok: true; store: KernelStore; dispose: () => Promise<void>; describe: string } | { ok: false }> {
+  const backend = (flagString(parsed, '--store') ?? 'memory').toLowerCase();
+
+  if (backend === 'memory') {
+    const factory = new MemoryStoreFactory({ allowSingleTenant: true });
+    return {
+      ok: true,
+      store: factory.forTenant(asTenantId(SERVE_TENANT)),
+      dispose: async () => undefined,
+      describe: 'in-memory (no database)',
+    };
+  }
+
+  if (backend !== 'postgres') {
+    writeErr(`${symbols.fail} Unknown --store "${backend}". Use "memory" or "postgres".`);
+    return { ok: false };
+  }
+
+  // Flag first, environment second. The explicit flag wins so a stray DATABASE_URL
+  // in a shell profile cannot silently redirect a serve process at another database.
+  const connectionString = flagString(parsed, '--database-url') ?? process.env.DATABASE_URL ?? '';
+
+  if (!connectionString) {
+    writeErr(`${symbols.fail} --store postgres requires --database-url <url>.`);
+    writeErr(`    ${pc.dim('Example: tcpctl serve ./my-adapter.yaml --store postgres --database-url postgres://user:pw@localhost:5432/tcpcore')}`);
+    return { ok: false };
+  }
+
+  const tenantId = asTenantId(flagString(parsed, '--tenant-id') ?? SERVE_TENANT);
+
+  const factory = new PostgresKernelStoreFactory({
+    connectionString,
+    // This command is explicitly single-tenant, and it says so here rather than
+    // relying on the sentinel being reachable by default.
+    allowSingleTenant: true,
+  });
+
+  // Verify the database is reachable and the schema is present before binding a
+  // port, so a misconfiguration is a startup error rather than a failed request.
+  try {
+    const probe = factory.forTenant(tenantId);
+    await probe.listIntegrations();
+  } catch (error) {
+    writeErr(`${symbols.fail} Could not use PostgreSQL at ${redactUrl(connectionString)}`);
+    writeErr(`    ${(error as Error).message}`);
+    writeErr(
+      `    ${pc.dim('Has the kernel schema been applied? See "Storage" in the kernel README.')}`,
+    );
+    await factory.end().catch(() => undefined);
+    return { ok: false };
+  }
+
+  return {
+    ok: true,
+    store: factory.forTenant(tenantId),
+    dispose: () => factory.end(),
+    describe: `postgres (tenant ${tenantId})`,
+  };
+}
+
+/** Never print a password that was passed in a connection string. */
+function redactUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (parsed.password) parsed.password = '***';
+    return parsed.toString();
+  } catch {
+    return '<connection string>';
+  }
+}
+
 /**
  * `tcpctl serve` — run the governance kernel locally against adapter files.
  *
- * Uses {@link MemoryStore}, so no database is required. That is the whole point:
- * a developer can go from "here is an OpenAPI spec" to "here is a governed,
- * MCP-callable surface" without provisioning anything.
+ * Uses the in-memory store by default, so no database is required. That is the
+ * whole point: a developer can go from "here is an OpenAPI spec" to "here is a
+ * governed, MCP-callable surface" without provisioning anything. `--store postgres`
+ * is the self-hosting path for anyone who wants governance state to survive a
+ * restart.
  *
  * The HTTP surface mirrors `apps/api` so a Cursor/Claude Desktop config written
  * against this server keeps working after a deploy.
@@ -31,8 +124,11 @@ export async function runServe(parsed: ParsedArgv): Promise<number> {
     .map((entry) => entry.trim())
     .filter(Boolean);
 
+  const selected = await selectStore(parsed);
+  if (!selected.ok) return 1;
+
   const kernel = new Kernel({
-    store: new MemoryStore(),
+    store: selected.store,
     requireHttps: !flagBoolean(parsed, '--allow-http'),
     outboundHostAllowlist: allowlist,
     sanitizeAllResponses: flagBoolean(parsed, '--sanitize-all'),
@@ -239,6 +335,7 @@ export async function runServe(parsed: ParsedArgv): Promise<number> {
     write(`  ${pc.dim('Capabilities')}   GET  /api/capabilities`);
     write(`  ${pc.dim('Invoke')}         POST /api/capabilities/:name/invoke`);
     write(`  ${pc.dim('Audit')}          GET  /api/audit-log`);
+    write(`  ${pc.dim('Storage')}        ${selected.describe}`);
     write('');
     write(`  ${pc.dim('MCP tools exposed:')} ${kernel.mcpTools().length}`);
     write(
@@ -254,7 +351,14 @@ export async function runServe(parsed: ParsedArgv): Promise<number> {
   const shutdown = () => {
     write('');
     write(`${symbols.info} Shutting down.`);
-    server.close(() => process.exit(0));
+    server.close(() => {
+      // Close the pool on the way out, so a Postgres-backed serve does not leave
+      // connections for the database to reap.
+      selected
+        .dispose()
+        .catch(() => undefined)
+        .finally(() => process.exit(0));
+    });
   };
 
   process.on('SIGINT', shutdown);

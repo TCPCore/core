@@ -1,6 +1,6 @@
 {
   "name": "@tcpcore1/cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "license": "MIT",
   "description": "tcpctl — scaffold, generate, validate and serve TCPcore governed adapters.",
   "type": "module",
@@ -45,6 +45,7 @@
     "@tcpcore1/kernel": "workspace:*",
     "@tcpcore1/shared": "workspace:*",
     "hono": "^4.6.14",
+    "pg": "^8.13.1",
     "picocolors": "^1.1.1"
   },
   "devDependencies": {

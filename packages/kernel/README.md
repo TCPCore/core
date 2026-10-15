@@ -4,7 +4,8 @@
 agent identity, a risk gate, a human approval queue, credential brokering, a
 prompt-injection sanitiser, and a NIST AU-3 audit trail.
 
-MIT licensed. Domain-agnostic. No database required.
+MIT licensed. Domain-agnostic. No database required, and PostgreSQL supported when
+you want one.
 
 ```bash
 npm install @tcpcore1/kernel
@@ -153,9 +154,129 @@ no target to attribute a row to.
 `KernelStore` is the persistence boundary. The kernel never talks to Prisma (or
 any ORM) directly, which is what makes it testable and self-hostable:
 
-- `MemoryStore` ships in the box - no database at all.
+- `MemoryStore` ships in the box: no database at all, and the default for `tcpctl serve`.
+- `PostgresKernelStore` ships in the box too, and is what you want the moment
+  governance state has to survive a restart. See "Connecting PostgreSQL" below.
 - A Prisma-backed store is what `apps/api` injects.
-- `tcpctl serve` uses the in-memory store so the CLI runs with no database.
+
+### Connecting PostgreSQL
+
+`pg` (node-postgres) is an **optional peer dependency**. `MemoryStore` users never
+install it, and the kernel never loads it unless a Postgres store is constructed.
+
+Install the driver, apply the schema once, then get a tenant-bound store from the
+factory:
+
+```bash
+npm install pg@^8
+```
+
+```ts
+import { Pool } from 'pg';
+import {
+  Kernel,
+  PostgresKernelStoreFactory,
+  asTenantId,
+  createPostgresSchema,
+} from '@tcpcore1/kernel';
+
+const connectionString = process.env.DATABASE_URL!;
+
+// Once, at deploy time. Plain SQL, so you can also run it with psql.
+const setupPool = new Pool({ connectionString });
+await createPostgresSchema(setupPool);
+await setupPool.end();
+
+// Per process. The tenant is bound here, and nowhere else.
+const storeFactory = new PostgresKernelStoreFactory({ connectionString });
+
+const kernel = new Kernel({
+  store: storeFactory.forTenant(asTenantId('acme')),
+  encryptionKey: normalizeKey(generateKeyHex()),
+  requireHttps: true,
+});
+
+await kernel.start();
+```
+
+Tables created: `kernel_integrations`, `kernel_capabilities`, `kernel_credentials`,
+`kernel_audit_log`, `kernel_approvals`, `kernel_agent_runs`. The DDL is exported as
+`POSTGRES_KERNEL_SCHEMA_SQL` if you would rather review or own the migration
+yourself. The store does not create tables on first use, because that would run
+DDL with whatever privileges the runtime role happens to hold.
+
+#### A store is bound to one tenant for its lifetime
+
+`forTenant()` takes the tenant as a required argument and returns a store that has
+already captured it. No method on `KernelStore` accepts a tenant, and none defaults
+to one. The tenant is taken from the factory, never from ambient state.
+
+That is deliberate. Ambient context on the hot path beneath every governed call
+fails three ways: it interleaves under concurrency, it is invisible coupling (the
+store cannot be used from a worker or a CLI without a context provider), and it
+fails silently, because an unset tenant makes `WHERE tenant_id = ...` match nothing,
+so the caller sees an empty result rather than an error.
+
+Isolation is structural rather than a convention you have to remember:
+
+- Every statement in `PostgresKernelStore` carries the bound tenant as a parameter.
+- `tenant_id` is the first column of every primary key and of every foreign key, so
+  two tenants can hold the same integration name or capability name without
+  colliding, and a capability cannot reference another tenant's integration.
+- The schema enables row level security with a policy that compares against
+  `app.tenant_id`. It is defence in depth, and it defers to the application's own
+  predicate when the setting is absent, so it cannot silently return nothing.
+
+`SINGLE_TENANT` is accepted only when the factory is constructed with
+`{ allowSingleTenant: true }`. A single-tenant self-host says so explicitly; a
+multi-tenant deployment cannot reach the sentinel by accident.
+
+### Migrating from 0.1.x to 0.2.0
+
+`0.1.x` had nowhere to bind a tenant, so a store was passed straight to the kernel.
+`0.2.0` adds the factory, and `tcpctl serve` gained `--store postgres`. The
+in-memory path is unchanged, so an existing single-process deployment that does not
+want a database needs no code change at all.
+
+Old call shape (`0.1.x`), unchanged and still supported:
+
+```ts
+import { Kernel, MemoryStore } from '@tcpcore1/kernel';
+
+const kernel = new Kernel({
+  store: new MemoryStore(),
+  requireHttps: true,
+});
+```
+
+New call shape (`0.2.0`), tenant bound at the factory, database optional but durable:
+
+```ts
+import { Kernel, PostgresKernelStoreFactory, asTenantId } from '@tcpcore1/kernel';
+
+const factory = new PostgresKernelStoreFactory({
+  connectionString: process.env.DATABASE_URL!,
+});
+
+const kernel = new Kernel({
+  // The tenant is decided here, once, not by each query.
+  store: factory.forTenant(asTenantId(process.env.TCPCORE_TENANT_ID ?? '__single__')),
+  requireHttps: true,
+});
+
+// On shutdown, so the pool is closed rather than left for the server to reap.
+await factory.end();
+```
+
+Or from the command line, with the in-memory default untouched:
+
+```bash
+# unchanged: no database required
+tcpctl serve adapters/builtin/*.yaml
+
+# new: governance state survives a restart
+tcpctl serve adapters/builtin/*.yaml --store postgres --database-url postgres://user:pw@localhost:5432/tcpcore
+```
 
 ## MCP
 
@@ -172,9 +293,11 @@ about risk - the kernel enforces it regardless.
 ## What this package does not do
 
 - **No HTTP server.** That is `apps/api` or `tcpctl serve`.
-- **No multi-tenancy, SSO or billing.** Those are commercial phases and are not
-  installed by this package. Nothing in this package depends on them, imports
-  them, or is disabled without them.
+- **No tenant management.** The kernel binds a tenant and isolates rows
+  structurally, which is what a store needs. Creating, naming, suspending or
+  billing tenants, and SSO above them, are commercial phases and are not installed
+  by this package. Nothing here depends on them, imports them, or is disabled
+  without them.
 - **No agent framework.** It governs calls; it does not decide what to call.
 
 ## Testing
@@ -187,6 +310,20 @@ pnpm vitest run packages/kernel
 The suite covers the invariants above, including regression tests that fail if
 `executeApproval` ever accepts a non-`APPROVED` request, if a bare agent regains
 access, or if a denial branch stops returning an audit id.
+
+Two suites cover storage specifically:
+
+- `src/__tests__/store-tenant-isolation.test.ts` drives a recording pool and fails
+  if any statement loses its tenant parameter. It needs no database, so it runs on
+  every commit.
+- `scripts/verify-postgres-store.mjs` proves the same claims against a real
+  PostgreSQL server: it boots a disposable cluster, applies the schema, exercises
+  every `KernelStore` method, and asserts that a second tenant cannot read the
+  first tenant's rows.
+
+```bash
+node scripts/verify-postgres-store.mjs
+```
 
 ## License
 

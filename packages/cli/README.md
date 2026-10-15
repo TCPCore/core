@@ -1,7 +1,8 @@
 # @tcpcore1/cli
 
 **`tcpctl`** - turn any API into a governed, agent-callable surface from the
-terminal. No database, no API key, no code.
+terminal. No database, no API key, no code. PostgreSQL is optional when you want
+governance state to outlive the process.
 
 MIT licensed.
 
@@ -78,9 +79,34 @@ Point Cursor or Claude Desktop at `http://localhost:8080/api/mcp` and the agent
 sees **only** the capabilities you declared. High-risk and `agent_forbidden`
 operations are not listed at all.
 
-`serve` uses an in-memory store, so it runs with no database. Integrations that
-need a credential are configured through its HTTP API - which is the point: the
-agent never holds the vendor key, the kernel injects it at call time.
+`serve` uses an in-memory store by default, so it runs with no database.
+Integrations that need a credential are configured through its HTTP API - which is
+the point: the agent never holds the vendor key, the kernel injects it at call time.
+
+### Persist governance state in PostgreSQL
+
+In-memory means the audit trail is lost when the process stops, which is fine for a
+demo and not fine for anything you have to answer questions about later. Pass
+`--store postgres` with a connection string to keep integrations, capabilities,
+credentials, approvals, audit rows and agent runs in a real database:
+
+```bash
+# one-time, from the kernel package (or run the SQL with psql)
+node -e "import('@tcpcore1/kernel').then(async (k) => { const { Pool } = await import('pg'); const p = new Pool({ connectionString: process.env.DATABASE_URL }); await k.createPostgresSchema(p); await p.end(); })"
+
+tcpctl serve petstore.yaml \
+  --store postgres \
+  --database-url postgres://user:pw@localhost:5432/tcpcore
+```
+
+`--database-url` falls back to `DATABASE_URL` when omitted, and the flag wins when
+both are set, so a stray `DATABASE_URL` in a shell profile cannot silently redirect
+a serve process at another database.
+
+Every row `serve` reads and writes is scoped to one tenant, chosen with
+`--tenant-id` (default `__single__`). The tenant is bound once when the store is
+acquired, not passed to each query, so `serve` cannot read one tenant and write
+another. See the kernel README for the isolation guarantees.
 
 ## Invoke
 
