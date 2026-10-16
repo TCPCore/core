@@ -54,11 +54,15 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 function runCli(args, env, logName) {
   const logPath = join(os.tmpdir(), logName);
   return new Promise((resolve) => {
-    const child = spawn(process.execPath, [join(REPO_ROOT, 'packages/cli/bin/tcpctl.js'), ...args], {
-      cwd: REPO_ROOT,
-      env: { ...process.env, ...env },
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    const child = spawn(
+      process.execPath,
+      [join(REPO_ROOT, 'packages/cli/bin/tcpctl.js'), ...args],
+      {
+        cwd: REPO_ROOT,
+        env: { ...process.env, ...env },
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
     let out = '';
     let err = '';
     child.stdout.on('data', (chunk) => {
@@ -150,20 +154,24 @@ async function main() {
   step('2. Memory mode is still the default and needs no database');
   // Deliberately pointed at a port with nothing on it: if any code path tried to
   // reach a database without --store postgres, this would fail.
-  const memoryServer = spawn(process.execPath, [
-    join(REPO_ROOT, 'packages/cli/bin/tcpctl.js'),
-    'serve',
-    ADAPTER,
-    '--port',
-    String(SERVE_PORT),
-    '--allow-http',
-    '--allow-host',
-    'localhost,127.0.0.1',
-  ], {
-    cwd: REPO_ROOT,
-    env: { ...process.env, DATABASE_URL: 'postgres://nobody:nobody@127.0.0.1:1/nothing' },
-    stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  const memoryServer = spawn(
+    process.execPath,
+    [
+      join(REPO_ROOT, 'packages/cli/bin/tcpctl.js'),
+      'serve',
+      ADAPTER,
+      '--port',
+      String(SERVE_PORT),
+      '--allow-http',
+      '--allow-host',
+      'localhost,127.0.0.1',
+    ],
+    {
+      cwd: REPO_ROOT,
+      env: { ...process.env, DATABASE_URL: 'postgres://nobody:nobody@127.0.0.1:1/nothing' },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    },
+  );
   let memoryLog = '';
   memoryServer.stdout.on('data', (chunk) => {
     memoryLog += chunk;
@@ -178,10 +186,17 @@ async function main() {
     check(
       'banner reports in-memory storage',
       /Storage\s+in-memory/.test(memoryLog),
-      memoryLog.split('\n').find((l) => l.includes('Storage'))?.trim(),
+      memoryLog
+        .split('\n')
+        .find((l) => l.includes('Storage'))
+        ?.trim(),
     );
     const audit = await get(`http://127.0.0.1:${SERVE_PORT}/api/audit-log?limit=5`);
-    check('memory mode serves the audit endpoint', audit.status === 200, `total=${audit.body?.total}`);
+    check(
+      'memory mode serves the audit endpoint',
+      audit.status === 200,
+      `total=${audit.body?.total}`,
+    );
   } finally {
     memoryServer.kill();
     await sleep(1200);
@@ -222,7 +237,14 @@ async function main() {
     const healthy = await waitForHealth();
     console.log(serverLog.trimEnd());
     check('the Postgres-backed server came up', healthy);
-    check('banner reports postgres storage and the bound tenant', /Storage\s+postgres \(tenant tenant_cli_proof\)/.test(serverLog), serverLog.split('\n').find((l) => l.includes('Storage'))?.trim());
+    check(
+      'banner reports postgres storage and the bound tenant',
+      /Storage\s+postgres \(tenant tenant_cli_proof\)/.test(serverLog),
+      serverLog
+        .split('\n')
+        .find((l) => l.includes('Storage'))
+        ?.trim(),
+    );
 
     check(
       'integrations were persisted under the bound tenant',
@@ -293,7 +315,11 @@ async function main() {
       ['failed', 'executed'].includes(invokeBody.status),
       `status=${invokeBody.status} auditId=${invokeBody.auditId}`,
     );
-    check('the governed call carried a real audit id', Boolean(invokeBody.auditId), invokeBody.auditId);
+    check(
+      'the governed call carried a real audit id',
+      Boolean(invokeBody.auditId),
+      invokeBody.auditId,
+    );
 
     // An agent may never close a ticket: a policy denial, which is also audited.
     const deniedResponse = await fetch(
@@ -374,7 +400,14 @@ async function main() {
 
   try {
     const healthy = await waitForHealth();
-    check('the restarted server came up', healthy);
+    // The capture earns its place only in the case it was written for. When the server does not come
+    // up, the reason is in the child's stderr and nowhere else, so it is quoted into the failure
+    // rather than accumulated and dropped.
+    check(
+      'the restarted server came up',
+      healthy,
+      healthy ? '' : `output=${restartLog.slice(-1200).trim()}`,
+    );
     const status = await get(`http://127.0.0.1:${SERVE_PORT}/api/system/status`);
     check(
       'the audit trail survived the restart',
@@ -422,7 +455,11 @@ async function main() {
 
   try {
     const healthy = await waitForHealth();
-    check('the second tenant server came up', healthy);
+    check(
+      'the second tenant server came up',
+      healthy,
+      healthy ? '' : `output=${otherLog.slice(-1200).trim()}`,
+    );
 
     const beforeOther = await get(`http://127.0.0.1:${SERVE_PORT}/api/audit-log?limit=10`);
     check(
@@ -560,7 +597,9 @@ async function main() {
   await admin.end();
 
   line();
-  console.log(failures === 0 ? 'RESULT: all CLI checks passed' : `RESULT: ${failures} CHECK(S) FAILED`);
+  console.log(
+    failures === 0 ? 'RESULT: all CLI checks passed' : `RESULT: ${failures} CHECK(S) FAILED`,
+  );
   line();
 
   await cluster.stop().catch(() => {});
@@ -573,7 +612,9 @@ async function main() {
       await sleep(1000);
     }
   }
-  console.log(`data directory cleanup: ${existsSync(DATA_DIR) ? 'left in place (in use)' : 'removed'}`);
+  console.log(
+    `data directory cleanup: ${existsSync(DATA_DIR) ? 'left in place (in use)' : 'removed'}`,
+  );
 
   process.exit(failures === 0 ? 0 : 1);
 }
@@ -582,8 +623,3 @@ main().catch((error) => {
   console.error('\nVERIFICATION ERROR:', error);
   process.exit(1);
 });
-
-
-
-
-

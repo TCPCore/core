@@ -78,3 +78,5 @@ cloud/phase-b-licensing/patches/.applied-manifest.json
 *.rej
 *.ts.bak
 
+
+pnpm-publish-summary.json

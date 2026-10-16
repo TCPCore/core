@@ -58,7 +58,11 @@ export {
   type ValidationIssue,
   type ValidateOptions,
 } from './schema-validate.js';
-export { MemoryStore, MemoryStoreFactory, type MemoryStoreFactoryOptions } from './stores/memory.js';
+export {
+  MemoryStore,
+  MemoryStoreFactory,
+  type MemoryStoreFactoryOptions,
+} from './stores/memory.js';
 export {
   PostgresKernelStore,
   PostgresKernelStoreFactory,

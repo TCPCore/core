@@ -59,7 +59,9 @@ function equal(label, actual, expected) {
   if (!ok) failures += 1;
   console.log(
     `  ${ok ? 'PASS' : 'FAIL'}  ${label}` +
-      (ok ? '' : `\n          expected ${JSON.stringify(expected)}\n          actual   ${JSON.stringify(actual)}`),
+      (ok
+        ? ''
+        : `\n          expected ${JSON.stringify(expected)}\n          actual   ${JSON.stringify(actual)}`),
   );
   return ok;
 }
@@ -210,9 +212,7 @@ async function main() {
 
   // ----------------------------------------------------------------- schema
   step('2. Apply the shipped schema');
-  const kernel = await import(
-    pathToFileURL(join(REPO_ROOT, 'packages/kernel/dist/index.js')).href
-  );
+  const kernel = await import(pathToFileURL(join(REPO_ROOT, 'packages/kernel/dist/index.js')).href);
 
   const { createPostgresSchema, PostgresKernelStoreFactory, asTenantId, SINGLE_TENANT } = kernel;
 
@@ -302,15 +302,28 @@ async function main() {
   await alpha.appendAudit(auditFor('audit_alpha_1', 'alpha'));
   const auditWrite = await alpha.listAudit({});
   check('appendAudit + listAudit', auditWrite.total === 1, `total=${auditWrite.total}`);
-  check('listAudit filter by actorType', (await alpha.listAudit({ actorType: 'AGENT' })).total === 1);
+  check(
+    'listAudit filter by actorType',
+    (await alpha.listAudit({ actorType: 'AGENT' })).total === 1,
+  );
   check('listAudit filter by action', (await alpha.listAudit({ action: 'EXECUTE' })).total === 1);
-  check('listAudit filter by targetSystem', (await alpha.listAudit({ targetSystem: 'petstore' })).total === 1);
-  check('listAudit filter by capabilityName', (await alpha.listAudit({ capabilityName: 'get_pet' })).total === 1);
+  check(
+    'listAudit filter by targetSystem',
+    (await alpha.listAudit({ targetSystem: 'petstore' })).total === 1,
+  );
+  check(
+    'listAudit filter by capabilityName',
+    (await alpha.listAudit({ capabilityName: 'get_pet' })).total === 1,
+  );
   check('listAudit search hit', (await alpha.listAudit({ search: 'ALPHA' })).total === 1);
-  check('listAudit search miss', (await alpha.listAudit({ search: 'zzz-not-present' })).total === 0);
+  check(
+    'listAudit search miss',
+    (await alpha.listAudit({ search: 'zzz-not-present' })).total === 0,
+  );
   check(
     'listAudit date range',
-    (await alpha.listAudit({ from: '2025-12-31T00:00:00.000Z', to: '2026-12-31T00:00:00.000Z' })).total === 1,
+    (await alpha.listAudit({ from: '2025-12-31T00:00:00.000Z', to: '2026-12-31T00:00:00.000Z' }))
+      .total === 1,
   );
   check(
     'listAudit paging',
@@ -324,7 +337,10 @@ async function main() {
   );
 
   await alpha.saveApproval(approvalFor('approval_alpha_1', 'alpha'));
-  check('saveApproval + getApproval', (await alpha.getApproval('approval_alpha_1'))?.status === 'PENDING');
+  check(
+    'saveApproval + getApproval',
+    (await alpha.getApproval('approval_alpha_1'))?.status === 'PENDING',
+  );
   check('listApprovals (no filter)', (await alpha.listApprovals()).length === 1);
   check('listApprovals (PENDING)', (await alpha.listApprovals('PENDING')).length === 1);
   check('listApprovals (APPROVED)', (await alpha.listApprovals('APPROVED')).length === 0);
@@ -376,7 +392,11 @@ async function main() {
   equal('B reads 0 audit rows where A has 1', betaSees.audit, 0);
   equal('B reads 0 approvals where A has 1', betaSees.approvals, 0);
   equal('B reads 0 agent runs where A has 1', betaSees.runs, 0);
-  equal('B cannot fetch A credential by the same integration name', await beta.getCredential('petstore'), undefined);
+  equal(
+    'B cannot fetch A credential by the same integration name',
+    await beta.getCredential('petstore'),
+    undefined,
+  );
   equal('B cannot fetch A approval by id', await beta.getApproval('approval_alpha_1'), undefined);
   equal(
     'B cannot reach A rows through the capability filter',
@@ -407,12 +427,16 @@ async function main() {
   await beta.saveApproval(approvalFor('approval_beta_1', 'beta'));
   await beta.saveAgentRun(runFor('run_beta_1', 'beta'));
 
-  equal('alpha still sees exactly its own integration', (await alpha.listIntegrations()).map((r) => r.displayName), [
-    'Alpha Petstore',
-  ]);
-  equal('beta sees exactly its own integration', (await beta.listIntegrations()).map((r) => r.displayName), [
-    'Beta Petstore',
-  ]);
+  equal(
+    'alpha still sees exactly its own integration',
+    (await alpha.listIntegrations()).map((r) => r.displayName),
+    ['Alpha Petstore'],
+  );
+  equal(
+    'beta sees exactly its own integration',
+    (await beta.listIntegrations()).map((r) => r.displayName),
+    ['Beta Petstore'],
+  );
   equal('alpha audit total unchanged', (await alpha.listAudit({})).total, 1);
   equal('beta audit total is its own', (await beta.listAudit({})).total, 1);
   equal(
@@ -424,10 +448,27 @@ async function main() {
   // ------------------------------------------------- arbitrary tenant name
   step('5b. Isolation also holds for a tenant that writes first');
   const gamma = factory.forTenant(asTenantId('tenant_gamma'));
-  await gamma.saveIntegration({ ...integrationA, id: 'int_gamma', name: 'gamma-only', displayName: 'Gamma' });
-  equal('gamma sees only itself', (await gamma.listIntegrations()).map((r) => r.name), ['gamma-only']);
-  equal('alpha does not see gamma', (await alpha.listIntegrations()).some((r) => r.name === 'gamma-only'), false);
-  equal('beta does not see gamma', (await beta.listIntegrations()).some((r) => r.name === 'gamma-only'), false);
+  await gamma.saveIntegration({
+    ...integrationA,
+    id: 'int_gamma',
+    name: 'gamma-only',
+    displayName: 'Gamma',
+  });
+  equal(
+    'gamma sees only itself',
+    (await gamma.listIntegrations()).map((r) => r.name),
+    ['gamma-only'],
+  );
+  equal(
+    'alpha does not see gamma',
+    (await alpha.listIntegrations()).some((r) => r.name === 'gamma-only'),
+    false,
+  );
+  equal(
+    'beta does not see gamma',
+    (await beta.listIntegrations()).some((r) => r.name === 'gamma-only'),
+    false,
+  );
 
   // -------------------------------------------------------- row level security
   step('6. Row level security as a second, database-side mechanism');
@@ -447,10 +488,15 @@ async function main() {
   await scoped.query(`SELECT set_config('app.tenant_id', $1, false)`, [TENANT_A]);
   const scopedCount = await scoped.query('SELECT COUNT(*)::int AS n FROM kernel_audit_log');
   equal('RLS scoped to tenant_alpha sees 1 audit row', scopedCount.rows[0].n, 1);
-  const scopedOther = await scoped.query('SELECT COUNT(*)::int AS n FROM kernel_audit_log WHERE tenant_id = $1', [
-    TENANT_B,
-  ]);
-  equal('RLS scoped to tenant_alpha sees 0 of tenant_beta rows even when asked', scopedOther.rows[0].n, 0);
+  const scopedOther = await scoped.query(
+    'SELECT COUNT(*)::int AS n FROM kernel_audit_log WHERE tenant_id = $1',
+    [TENANT_B],
+  );
+  equal(
+    'RLS scoped to tenant_alpha sees 0 of tenant_beta rows even when asked',
+    scopedOther.rows[0].n,
+    0,
+  );
 
   await scoped.query(`SELECT set_config('app.tenant_id', $1, false)`, [TENANT_B]);
   const rlsBeta = await scoped.query(
@@ -510,7 +556,9 @@ async function main() {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
-  console.log(`  data directory cleanup: ${existsSync(DATA_DIR) ? 'left in place (in use)' : 'removed'}`);
+  console.log(
+    `  data directory cleanup: ${existsSync(DATA_DIR) ? 'left in place (in use)' : 'removed'}`,
+  );
 
   process.exit(failures === 0 ? 0 : 1);
 }

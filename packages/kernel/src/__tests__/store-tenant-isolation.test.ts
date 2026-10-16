@@ -36,9 +36,10 @@ interface RecordedQuery {
  * `responder` lets a test shape rows for the statement it cares about; anything it
  * does not handle returns an empty result, which is enough for write paths.
  */
-function recordingPool(
-  responder?: (text: string, values: unknown[]) => unknown[] | undefined,
-): { pool: PgPoolLike; queries: RecordedQuery[] } {
+function recordingPool(responder?: (text: string, values: unknown[]) => unknown[] | undefined): {
+  pool: PgPoolLike;
+  queries: RecordedQuery[];
+} {
   const queries: RecordedQuery[] = [];
 
   const query = async (text: string, values?: unknown[]): Promise<PgQueryResultLike> => {

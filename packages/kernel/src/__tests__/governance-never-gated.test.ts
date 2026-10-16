@@ -238,8 +238,17 @@ describe('each primitive runs without a licence, because the kernel has none', (
     // licence or entitlement parameter.
     const api = await import('../index.js');
 
-    for (const name of ['RiskGate', 'ApprovalQueue', 'Auditor', 'sanitizePayload', 'buildMcpTools']) {
-      expect(api[name as keyof typeof api], `${name} must be exported from the package root`).toBeDefined();
+    for (const name of [
+      'RiskGate',
+      'ApprovalQueue',
+      'Auditor',
+      'sanitizePayload',
+      'buildMcpTools',
+    ]) {
+      expect(
+        api[name as keyof typeof api],
+        `${name} must be exported from the package root`,
+      ).toBeDefined();
     }
 
     // `Kernel` takes a store factory, not a licence. Asserted as a signature fact so a

@@ -115,7 +115,8 @@ async function loadPg(): Promise<PgModuleLike> {
 
 type Row = Record<string, unknown>;
 
-const asString = (value: unknown): string => (value === null || value === undefined ? '' : String(value));
+const asString = (value: unknown): string =>
+  value === null || value === undefined ? '' : String(value);
 const asStringOrNull = (value: unknown): string | null =>
   value === null || value === undefined ? null : String(value);
 const asBoolean = (value: unknown): boolean => value === true || value === 't' || value === 'true';
@@ -175,9 +176,13 @@ function mapCapability(row: Row): KernelCapabilityRecord {
     riskLevel: asString(row.risk_level) as KernelCapabilityRecord['riskLevel'],
     approvalRequired: asBoolean(row.approval_required),
     agentForbidden: asBoolean(row.agent_forbidden),
-    contentRisk: (asStringOrNull(row.content_risk) as KernelCapabilityRecord['contentRisk']) ?? null,
+    contentRisk:
+      (asStringOrNull(row.content_risk) as KernelCapabilityRecord['contentRisk']) ?? null,
     deprecated: asBoolean(row.deprecated),
-    inputSchema: (asJson<Record<string, unknown>>(row.input_schema) ?? {}) as Record<string, unknown>,
+    inputSchema: (asJson<Record<string, unknown>>(row.input_schema) ?? {}) as Record<
+      string,
+      unknown
+    >,
     outputSchema: (asJson<Record<string, unknown>>(row.output_schema) ?? null) as Record<
       string,
       unknown
@@ -229,7 +234,9 @@ function mapApproval(row: Row): ApprovalRequest {
     targetPayload: asJson<unknown>(row.target_payload),
     // The queue only stores medium/high, and the shared schema excludes `low`, so
     // widening here is safe and keeps the column a plain string.
-    riskLevel: (asString(row.risk_level) === 'high' ? 'high' : 'medium') as ApprovalRequest['riskLevel'],
+    riskLevel: (asString(row.risk_level) === 'high'
+      ? 'high'
+      : 'medium') as ApprovalRequest['riskLevel'],
     status: asString(row.status) as ApprovalRequest['status'],
     reviewedById: asStringOrNull(row.reviewed_by_id),
     reviewedByName: asStringOrNull(row.reviewed_by_name),
@@ -430,10 +437,10 @@ export class PostgresKernelStore implements KernelStore {
             )`,
         [this.#tenantId, name],
       );
-      await client.query(`DELETE FROM kernel_credentials WHERE tenant_id = $1 AND integration_name = $2`, [
-        this.#tenantId,
-        name,
-      ]);
+      await client.query(
+        `DELETE FROM kernel_credentials WHERE tenant_id = $1 AND integration_name = $2`,
+        [this.#tenantId, name],
+      );
       await client.query(`DELETE FROM kernel_integrations WHERE tenant_id = $1 AND name = $2`, [
         this.#tenantId,
         name,

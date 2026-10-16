@@ -7,6 +7,11 @@ this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-16
+
+Released to npm as `@tcpcore1/kernel@0.2.0` and `@tcpcore1/cli@0.2.0`, in that order, because the
+CLI declares the kernel as a dependency.
+
 ### Added
 
 - **`@tcpcore1/kernel`** (MIT) — the governance kernel:

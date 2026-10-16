@@ -27,7 +27,9 @@ const SERVE_TENANT = '__single__';
  */
 async function selectStore(
   parsed: ParsedArgv,
-): Promise<{ ok: true; store: KernelStore; dispose: () => Promise<void>; describe: string } | { ok: false }> {
+): Promise<
+  { ok: true; store: KernelStore; dispose: () => Promise<void>; describe: string } | { ok: false }
+> {
   const backend = (flagString(parsed, '--store') ?? 'memory').toLowerCase();
 
   if (backend === 'memory') {
@@ -51,7 +53,9 @@ async function selectStore(
 
   if (!connectionString) {
     writeErr(`${symbols.fail} --store postgres requires --database-url <url>.`);
-    writeErr(`    ${pc.dim('Example: tcpctl serve ./my-adapter.yaml --store postgres --database-url postgres://user:pw@localhost:5432/tcpcore')}`);
+    writeErr(
+      `    ${pc.dim('Example: tcpctl serve ./my-adapter.yaml --store postgres --database-url postgres://user:pw@localhost:5432/tcpcore')}`,
+    );
     return { ok: false };
   }
 
